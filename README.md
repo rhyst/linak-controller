@@ -10,7 +10,19 @@ The desk should be connected and paired to the computer.
 
 ### Install
 
-Install the Python requirements found in `requirements.text`.
+Install the Python requirements found in `requirements.txt`:
+
+```
+pip install -r requirements.txt
+```
+
+The script uses [gatt-python](https://github.com/getsenic/gatt-python) which additionally requires that `python3-dbus` is installed.
+
+On Ubuntu this can be installed with:
+
+```shell
+sudo apt install python3-dbus
+```
 
 ### Configuration
 
