@@ -132,7 +132,7 @@ class Desk(gatt.Device):
 
     def characteristic_value_updated(self, characteristic, value):
         if characteristic.uuid == UUID_HEIGHT:
-            height, speed = struct.unpack("<HH", value)
+            height, speed = struct.unpack("<Hh", value)
             self.count += 1
             self.height = height
 
