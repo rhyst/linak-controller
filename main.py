@@ -108,7 +108,8 @@ class Desk(gatt.Device):
 
     def disconnect_succeeded(self):
         super().disconnect_succeeded()
-        print("[%s] Disconnected" % (self.mac_address))
+        print("[%s] Disconnected, will reconnect" % (self.mac_address))
+        self.connect()
 
     def services_resolved(self):
         super().services_resolved()
