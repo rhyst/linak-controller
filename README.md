@@ -45,7 +45,12 @@ To print the current desk height:
 
 ```
 python3 main.py
+```
 
+To monitor for changes to height (and speed):
+
+```
+python3 main.py --monitor
 ```
 
 Assuming the config file is populated to move the desk to standing position:

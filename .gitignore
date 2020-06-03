@@ -1,3 +1,4 @@
 ref/
 venv/
 config.yaml
+.vscode
