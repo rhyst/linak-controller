@@ -29,7 +29,8 @@ config = {
     "sit_height": BASE_HEIGHT + 63,
     "adapter_name": 'hci0',
     "sit": False,
-    "stand": False
+    "stand": False,
+    "monitor": False,
 }
 
 # Overwrite from config.yaml
@@ -60,6 +61,8 @@ cmd.add_argument('--sit', dest='sit', action='store_true',
                  help="Move the desk to sitting height")
 cmd.add_argument('--stand', dest='stand', action='store_true',
                  help="Move the desk to standing height")
+cmd.add_argument('--monitor', dest='monitor', action='store_true',
+                 help="Monitor desk height and speed")
 
 args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
 config.update(args)
@@ -83,6 +86,9 @@ def mmToRaw(mm):
 
 def rawToMM(raw):
     return (raw / 10) + BASE_HEIGHT
+
+def rawToSpeed(raw):
+    return (raw / 100)
 
 
 config['stand_height_raw'] = mmToRaw(config['stand_height'])
@@ -136,6 +142,11 @@ class Desk(gatt.Device):
             height, speed = struct.unpack("<Hh", value)
             self.count += 1
             self.height = height
+
+            if self.config['monitor']:
+                print("Current height: {}mm, speed: {}"
+                      .format(rawToMM(height), rawToSpeed(speed)))
+                return
 
             # No target specified so print current height
             if not self.target:
