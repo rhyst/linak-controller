@@ -55,19 +55,17 @@ parser.add_argument('--sit-height', dest='sit_height', type=int,
                     help="The height the desk should be at when sitting")
 parser.add_argument('--adapter', dest='adapter_name', type=str,
                     help="The bluetooth adapter device name")
-parser.add_argument('--sit', dest='sit', action='store_true',
-                    help="Move the desk to sitting height")
-parser.add_argument('--stand', dest='stand', action='store_true',
-                    help="Move the desk to standing height")
+cmd = parser.add_mutually_exclusive_group()
+cmd.add_argument('--sit', dest='sit', action='store_true',
+                 help="Move the desk to sitting height")
+cmd.add_argument('--stand', dest='stand', action='store_true',
+                 help="Move the desk to standing height")
 
 args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
 config.update(args)
 
 if not config['mac_address']:
     parser.error("Mac address must be provided")
-
-if config['sit'] and config['stand']:
-    parser.error("Only one of --sit and --stand can be used")
 
 if config['sit_height'] >= config['stand_height']:
     parser.error("Sit height must be less than stand height")
