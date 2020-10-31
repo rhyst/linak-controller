@@ -6,6 +6,8 @@ The Idasen is a Linak standing desk sold by Ikea. It can be controlled by a phys
 
 ### Prerequisites
 
+Linux or mac operating system. This is due to using [gatt-python](https://github.com/getsenic/gatt-python).
+
 The desk should be connected and paired to the computer.
 
 ### Install
