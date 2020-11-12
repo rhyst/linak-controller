@@ -6,8 +6,6 @@ The Idasen is a Linak standing desk sold by Ikea. It can be controlled by a phys
 
 ### Prerequisites
 
-Linux or mac operating system. This is due to using [gatt-python](https://github.com/getsenic/gatt-python).
-
 The desk should be connected and paired to the computer.
 
 ### Install
@@ -16,14 +14,6 @@ Install the Python requirements found in `requirements.txt`:
 
 ```
 pip install -r requirements.txt
-```
-
-The script uses [gatt-python](https://github.com/getsenic/gatt-python) which additionally requires that `python3-dbus` is installed.
-
-On Ubuntu this can be installed with:
-
-```shell
-sudo apt install python3-dbus
 ```
 
 ### Configuration
@@ -65,6 +55,12 @@ Assuming the config file is populated to move the desk to sitting position:
 
 ```
 python3 main.py --sit
+```
+
+Move the desk to a certain height above the floor (in millimetres)
+
+```
+python3 main.py --move-to 800
 ```
 
 ### Albert Launcher

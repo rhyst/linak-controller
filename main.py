@@ -1,21 +1,44 @@
 #!python3
-import gatt
+import os
+import sys
 import struct
 import argparse
-import os
 import yaml
+import asyncio
+import traceback 
+from signal import SIGINT, SIGTERM
+from bleak import BleakClient, discover, BleakError
+import atexit
+
+IS_WINDOWS = os.name == 'nt'
+IS_LINUX = os.name == 'posix'
+
+# HELPER FUNCTIONS
+
+def mmToRaw(mm):
+    return (mm - BASE_HEIGHT) * 10
+
+def rawToMM(raw):
+    return (raw / 10) + BASE_HEIGHT
+
+def rawToSpeed(raw):
+    return (raw / 100)
+
+# GATT CHARACTERISTIC AND COMMAND DEFINITIONS
 
 UUID_HEIGHT = '99fa0021-338a-1024-8a49-009c0215f78a'
 UUID_COMMAND = '99fa0002-338a-1024-8a49-009c0215f78a'
 UUID_REFERENCE_INPUT = '99fa0031-338a-1024-8a49-009c0215f78a'
 
-COMMAND_UP = struct.pack("<H", 71)
-COMMAND_DOWN = struct.pack("<H", 70)
-COMMAND_STOP = struct.pack("<H", 255)
+COMMAND_UP = bytearray(struct.pack("<H", 71))
+COMMAND_DOWN = bytearray(struct.pack("<H", 70))
+COMMAND_STOP = bytearray(struct.pack("<H", 255))
 
-COMMAND_REFERENCE_INPUT_STOP = struct.pack("<H", 32769)
-COMMAND_REFERENCE_INPUT_UP = struct.pack("<H", 32768)
-COMMAND_REFERENCE_INPUT_DOWN = struct.pack("<H", 32767)
+COMMAND_REFERENCE_INPUT_STOP = bytearray(struct.pack("<H", 32769))
+COMMAND_REFERENCE_INPUT_UP = bytearray(struct.pack("<H", 32768))
+COMMAND_REFERENCE_INPUT_DOWN = bytearray(struct.pack("<H", 32767))
+
+# CONFIGURATION SETUP
 
 # Height of the desk at it's lowest (in mm)
 # I assume this is the same for all Idasen desks
@@ -31,6 +54,7 @@ config = {
     "sit": False,
     "stand": False,
     "monitor": False,
+    "move_to": None
 }
 
 # Overwrite from config.yaml
@@ -63,6 +87,8 @@ cmd.add_argument('--stand', dest='stand', action='store_true',
                  help="Move the desk to standing height")
 cmd.add_argument('--monitor', dest='monitor', action='store_true',
                  help="Monitor desk height and speed")
+cmd.add_argument('--move-to',dest='move_to', type=int,
+                 help="Move desk to specified height (mm above ground)")
 
 args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
 config.update(args)
@@ -79,149 +105,158 @@ if config['sit_height'] < BASE_HEIGHT:
 if config['stand_height'] > MAX_HEIGHT:
     parser.error("Stand height must be less than {}".format(MAX_HEIGHT))
 
-
-def mmToRaw(mm):
-    return (mm - BASE_HEIGHT) * 10
-
-
-def rawToMM(raw):
-    return (raw / 10) + BASE_HEIGHT
-
-def rawToSpeed(raw):
-    return (raw / 100)
-
-
 config['stand_height_raw'] = mmToRaw(config['stand_height'])
 config['sit_height_raw'] = mmToRaw(config['sit_height'])
+if config['move_to']:
+    config['move_to_raw'] = mmToRaw(config['move_to'])
+
+# MAIN PROGRAM
+
+def print_height_data(sender, data):
+    height, speed = struct.unpack("<Hh", data)
+    print("Current height: {}mm, speed: {}".format(rawToMM(height), rawToSpeed(speed)))
+
+def has_reached_target(height, target):
+    # The notified height values seem a bit behind so try to stop before
+    # reaching the target value to prevent overshooting
+    return (abs(height - target) <= 20)
+
+async def move_up(client):
+    await client.write_gatt_char(UUID_COMMAND, COMMAND_UP)
+
+async def move_down(client):
+    await client.write_gatt_char(UUID_COMMAND, COMMAND_DOWN)
+
+async def stop(client):
+    # This emulates the behaviour of the app. Stop commands are sent to both
+    # Reference Input and Command characteristics.
+    await client.write_gatt_char(UUID_COMMAND, COMMAND_STOP)
+    if IS_LINUX:
+        # It doesn't like this on windows
+        await client.write_gatt_char(UUID_REFERENCE_INPUT, COMMAND_REFERENCE_INPUT_STOP)
+
+unsubscribe_flag = False
+
+def should_unsubscribe():
+    global unsubscribe_flag
+    return unsubscribe_flag
+
+def ask_unsubscribe():
+    print('Disconnecting')
+    global unsubscribe_flag
+    unsubscribe_flag = True
 
 
-class Desk(gatt.Device):
-    def __init__(self, mac_address, manager, config):
-        self.config = config
-        self.direction = None
-        self.height = None
-        self.target = None
-        self.count = 0
-        super().__init__(mac_address, manager)
+async def subscribe(client, uuid, callback):
+    """Listen for notifications on a characteristic"""
+    await client.start_notify(uuid, callback)
 
-    def connect_succeeded(self):
-        super().connect_succeeded()
-        print("[%s] Connected" % (self.mac_address))
+    while not should_unsubscribe():
+        await asyncio.sleep(0.1)
 
-    def connect_failed(self, error):
-        super().connect_failed(error)
-        print("[%s] Connection failed: %s" % (self.mac_address, str(error)))
+    await client.stop_notify(uuid)
 
-    def disconnect_succeeded(self):
-        super().disconnect_succeeded()
-        print("[%s] Disconnected, will reconnect" % (self.mac_address))
-        self.connect()
+async def move_to(client, target):
+    """Move the desk to a specified height"""
 
-    def services_resolved(self):
-        super().services_resolved()
+    initial_height, speed = struct.unpack("<Hh", await client.read_gatt_char(UUID_HEIGHT))
 
-        if self.config['sit']:
-            self.target = self.config['sit_height_raw']
-        if self.config['stand']:
-            self.target = self.config['stand_height_raw']
+    # Initialise by setting the movement direction
+    direction = "UP" if target > initial_height else "DOWN"
+    
+    # Set up callback to run when the desk height changes. It will resend
+    # movement commands until the desk has reached the target height.
+    global count
+    count = 0
+    def _move_to(sender, data):
+        global count
+        height, speed = struct.unpack("<Hh", data)
+        count = count + 1
+        # Stop if we have reached the target
+        if has_reached_target(height, target):
+            print("Stopping at height: {}mm (target: {}mm)".format(rawToMM(height), rawToMM(target)))
+            asyncio.create_task(stop(client))
+            ask_unsubscribe()
+        # Or resend the movement command if we have not yet reached the
+        # target.
+        # Each movement command seems to run the desk motors for about 1
+        # second if uninterrupted and the height value is updated about 16
+        # times.
+        # Resending the command on the 6th update seems a good balance
+        # between helping to avoid overshoots and preventing stutterinhg
+        # (the motor seems to slow if no new move command has been sent)
+        elif direction == "UP" and count == 6:
+            asyncio.create_task(move_up(client))
+            count = 0
+        elif direction == "DOWN" and count == 6:
+            asyncio.create_task(move_down(client))
+            count = 0
 
-        for service in self.services:
-            for characteristic in service.characteristics:
-                if characteristic.uuid == UUID_HEIGHT:
-                    self.height_characteristic = characteristic
-                    self.height_characteristic.enable_notifications()
-                    # Reading the value triggers self.characteristic_value_updated
-                    self.height_characteristic.read_value()
-                if characteristic.uuid == UUID_COMMAND:
-                    self.command_characteristic = characteristic
-                if characteristic.uuid == UUID_REFERENCE_INPUT:
-                    self.reference_input_characteristic = characteristic
+    # Listen for changes to desk height and send first move command (if we are 
+    # not) already at the target height.
+    if not has_reached_target(initial_height, target):
+        tasks = [ subscribe(client, UUID_HEIGHT, _move_to) ]
+        if direction == "UP":
+            tasks.append(move_up(client))
+        elif direction == "DOWN":
+            tasks.append(move_down(client))
+        await asyncio.gather(*[task for task in tasks])
 
-    def characteristic_value_updated(self, characteristic, value):
-        if characteristic.uuid == UUID_HEIGHT:
-            height, speed = struct.unpack("<Hh", value)
-            self.count += 1
-            self.height = height
+if IS_LINUX:
+    client = BleakClient(config['mac_address'], timeout=10, device=config['adapter_name'])
+if IS_WINDOWS:
+    client = BleakClient(config['mac_address'], timeout=10)
 
-            if self.config['monitor']:
-                print("Current height: {}mm, speed: {}"
-                      .format(rawToMM(height), rawToSpeed(speed)))
-                return
+async def run():
+    """Begin the action specified by command line arguments and config"""
+    try:
+        print('Connecting')
+        await client.connect()
 
-            # No target specified so print current height
-            if not self.target:
-                print("Current height: {}mm".format(rawToMM(height)))
-                self.stop()
-                return
+        def disconnect_callback(client):
+            print("Lost connection with {}".format(client.address))
+            ask_unsubscribe()
+        client.set_disconnected_callback(disconnect_callback)
 
-            # Initialise by setting the movement direction and asking to send
-            # move commands
-            if not self.direction:
-                print("Initial height: {}mm".format(rawToMM(height)))
-                self.direction = "UP" if self.target > self.height else "DOWN"
-                self.move_to_target()
+        print("Connected {}".format(config['mac_address']))
+        # Always print current height
+        initial_height, speed = struct.unpack("<Hh", await client.read_gatt_char(UUID_HEIGHT))
+        print("Initial height: {}mm".format(rawToMM(initial_height)))
+        if config['monitor']:
+            # Print changes to height data
+            await subscribe(client, UUID_HEIGHT, print_height_data)
+        elif config['sit']:
+            # Move to configured sit height
+            await move_to(client, config['sit_height_raw'])
+        elif config['stand']:
+            # Move to configured stand height
+            await move_to(client, config['stand_height_raw'])
+        elif config['move_to']:
+            # Move to custom height
+            await move_to(client, config['move_to_raw'])
+    except BleakError as e:
+        print(e)
+    except Exception as e:
+        traceback.print_exc() 
 
-            # If already moving then stop if we have reached the target
-            if self.has_reached_target():
-                print("Stopping at height: {}mm (target: {}mm)".format(
-                    rawToMM(height), rawToMM(self.target)))
-                self.stop()
-            # Or resend the movement command if we have not yet reached the
-            # target.
-            # Each movement command seems to run the desk motors for about 1
-            # second if uninterrupted and the height value is updated about 16
-            # times.
-            # Resending the command on the 12th update seems a good balance
-            # between helping to avoid overshoots and preventing stutterinhg
-            # (the motor seems to slow if no new move command has been sent)
-            elif self.count == 12:
-                self.count = 0
-                self.move_to_target()
+def main():
+    """Set up the async event loop and signal handlers"""
+    loop = asyncio.get_event_loop()
 
-    def characteristic_write_value_succeeded(self, characteristic):
-        if characteristic.uuid == UUID_COMMAND and self.target:
-            pass
-        if characteristic.uuid == UUID_REFERENCE_INPUT:
-            pass
+    if IS_LINUX:
+        for sig in (SIGINT, SIGTERM):
+            # We must run client.disconnect() so attempt to exit gracefully
+            loop.add_signal_handler(sig, ask_unsubscribe)
 
-    def characteristic_write_value_failed(self, characteristic, error):
-        print("Error ", error)
-        self.stop()
+    loop.run_until_complete(run())
 
-    def has_reached_target(self):
-        # The notified height values seem a bit behind so try to stop before
-        # reaching the target value to prevent overshooting
-        return (abs(self.height - self.target) <= 20)
+    if client:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(client.disconnect())
+        print('Disconnected')
 
-    def move_to_target(self):
-        if self.has_reached_target():
-            return
-        elif self.direction == "DOWN" and self.height > self.target:
-            self.move_down()
-        elif self.direction == "UP" and self.height < self.target:
-            self.move_up()
+    loop.stop()
+    loop.close()
 
-    def move_up(self):
-        self.command_characteristic.write_value(COMMAND_UP)
-
-    def move_down(self):
-        self.command_characteristic.write_value(COMMAND_DOWN)
-
-    def stop(self):
-        # This emulates the behaviour of the app. Stop commands are sent to both
-        # Reference Input and Command characteristics.
-        self.command_characteristic.write_value(COMMAND_STOP)
-        self.reference_input_characteristic.write_value(
-            COMMAND_REFERENCE_INPUT_STOP)
-        manager.stop()
-
-
-manager = gatt.DeviceManager(adapter_name=config['adapter_name'])
-device = Desk(mac_address=config['mac_address'],
-              manager=manager, config=config)
-device.connect()
-try:
-    manager.run()
-except KeyboardInterrupt:
-    device.stop()
-    manager.stop()
+if __name__ == "__main__":
+    main()

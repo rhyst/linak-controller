@@ -1,4 +1,13 @@
-dbus-python==1.2.16
-gatt==0.2.7
-PyGObject==3.36.0
+attrs==20.3.0
+Automat==20.2.0
+bleak==0.9.1
+constantly==15.1.0
+hyperlink==20.0.1
+idna==2.10
+incremental==17.5.0
+PyHamcrest==2.0.2
 PyYAML==5.3.1
+six==1.15.0
+Twisted==20.3.0
+txdbus==1.1.2
+zope.interface==5.2.0
