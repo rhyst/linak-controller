@@ -23,9 +23,11 @@ Configuration can either be provided with a file, or via command line arguments.
 Config options:
 
 - `mac_address` - The MAC address of the desk. This is required.
-- `stand_height` - The standing height from the floor of the desk in mm. Default `1040`.
-- `sit_height` - The standing height from the floor of the desk in mm. Default `683`.
-- `adapter_name` - The adapter name for the bluetooth adapter to use for the connection. Default `hci0`
+- `stand_height` - The standing height (mm) from the floor of the desk Default `1040`.
+- `sit_height` - The standing height (mm) from the floor of the desk. Default `683`.
+- `adapter_name` - The adapter name for the bluetooth adapter to use for the connection (Linux only). Default `hci0`
+- `height_tolerance` - Distance (mm) between reported height and target height before ceasing move commands. Default `20`
+- `connection_timeout` - Timeout to obtain initial connection (seconds). Default `10`
 
 Device MAC addresses can be found using `blueoothctl` and blueooth adapter names can be found with `hcitool dev` on linux.
 
@@ -57,7 +59,7 @@ Assuming the config file is populated to move the desk to sitting position:
 python3 main.py --sit
 ```
 
-Move the desk to a certain height above the floor (in millimetres)
+Move the desk to a certain height (mm) above the floor:
 
 ```
 python3 main.py --move-to 800

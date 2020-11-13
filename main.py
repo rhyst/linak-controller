@@ -50,7 +50,9 @@ config = {
     "mac_address": None,
     "stand_height": BASE_HEIGHT + 420,
     "sit_height": BASE_HEIGHT + 63,
+    "height_tolerance": 20,
     "adapter_name": 'hci0',
+    "connection_timeout": 10,
     "sit": False,
     "stand": False,
     "monitor": False,
@@ -75,11 +77,13 @@ parser = argparse.ArgumentParser(description='')
 parser.add_argument('--mac-address', dest='mac_address',
                     type=str, help="Mac address of the Idasen desk")
 parser.add_argument('--stand-height', dest='stand_height', type=int,
-                    help="The height the desk should be at when standing")
+                    help="The height the desk should be at when standing (mm)")
 parser.add_argument('--sit-height', dest='sit_height', type=int,
-                    help="The height the desk should be at when sitting")
+                    help="The height the desk should be at when sitting (mm)")
 parser.add_argument('--adapter', dest='adapter_name', type=str,
                     help="The bluetooth adapter device name")
+parser.add_argument('--connection-timeout', dest='connection_timeout', type=int,
+                    help="The timeout for bluetooth connection (seconds)")
 cmd = parser.add_mutually_exclusive_group()
 cmd.add_argument('--sit', dest='sit', action='store_true',
                  help="Move the desk to sitting height")
@@ -88,7 +92,7 @@ cmd.add_argument('--stand', dest='stand', action='store_true',
 cmd.add_argument('--monitor', dest='monitor', action='store_true',
                  help="Monitor desk height and speed")
 cmd.add_argument('--move-to',dest='move_to', type=int,
-                 help="Move desk to specified height (mm above ground)")
+                 help="Move desk to specified height (mm)")
 
 args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
 config.update(args)
@@ -119,7 +123,7 @@ def print_height_data(sender, data):
 def has_reached_target(height, target):
     # The notified height values seem a bit behind so try to stop before
     # reaching the target value to prevent overshooting
-    return (abs(height - target) <= 20)
+    return (abs(height - target) <= config['height_tolerance'])
 
 async def move_up(client):
     await client.write_gatt_char(UUID_COMMAND, COMMAND_UP)
@@ -172,6 +176,8 @@ async def move_to(client, target):
         global count
         height, speed = struct.unpack("<Hh", data)
         count = count + 1
+        print("Current height: {}mm (target: {}mm) speed {}mm/s".format(rawToMM(height), rawToMM(target), rawToSpeed(speed)))
+
         # Stop if we have reached the target
         if has_reached_target(height, target):
             print("Stopping at height: {}mm (target: {}mm)".format(rawToMM(height), rawToMM(target)))
@@ -203,9 +209,9 @@ async def move_to(client, target):
         await asyncio.gather(*[task for task in tasks])
 
 if IS_LINUX:
-    client = BleakClient(config['mac_address'], timeout=10, device=config['adapter_name'])
+    client = BleakClient(config['mac_address'], timeout=config['connection_timeout'], device=config['adapter_name'])
 if IS_WINDOWS:
-    client = BleakClient(config['mac_address'], timeout=10)
+    client = BleakClient(config['mac_address'], timeout=config['connection_timeout'])
 
 async def run():
     """Begin the action specified by command line arguments and config"""
@@ -246,6 +252,7 @@ def main():
     if IS_LINUX:
         for sig in (SIGINT, SIGTERM):
             # We must run client.disconnect() so attempt to exit gracefully
+            # Windows seems to care a lot less about this
             loop.add_signal_handler(sig, ask_unsubscribe)
 
     loop.run_until_complete(run())
