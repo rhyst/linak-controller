@@ -27,9 +27,10 @@ Config options:
 - `sit_height` - The standing height (mm) from the floor of the desk. Default `683`.
 - `adapter_name` - The adapter name for the bluetooth adapter to use for the connection (Linux only). Default `hci0`
 - `height_tolerance` - Distance (mm) between reported height and target height before ceasing move commands. Default `20`
-- `connection_timeout` - Timeout to obtain initial connection (seconds). Default `10`
+- `scan_timeout` - Timeout to scan for the device (seconds). Default `5`
+- `connection_timeout` - Timeout to obtain connection (seconds). Default `10`
 
-Device MAC addresses can be found using `blueoothctl` and blueooth adapter names can be found with `hcitool dev` on linux.
+Device MAC addresses can be found using `bluetoothctl` and blueooth adapter names can be found with `hcitool dev` on linux, and on Windows you can use [Bluetooth LE Explorer](https://www.microsoft.com/en-us/p/bluetooth-le-explorer/9n0ztkf1qd98?activetab=pivot:overviewtab).
 
 ## Usage
 
@@ -65,19 +66,9 @@ Move the desk to a certain height (mm) above the floor:
 python3 main.py --move-to 800
 ```
 
-### Albert Launcher
+## Recipes
 
-I use the [albert](https://github.com/albertlauncher/albert) launcher along with two `.desktop` files to allow me to trigger this script from the launcher. An example of a desktop file for this is:
-
-```
-[Desktop Entry]
-Name=Desk - Sit
-Exec=/home/user/idasen-controller/venv/bin/python /home/user/idasen-controller/main.py --sit
-Icon=/home/user/idasen-controller/sit-icon.png
-Type=Application
-Comment=Lower desk to sitting height.
-
-```
+There is a page with a few examples of different ways to use the script: [RECIPES](RECIPES.md)
 
 ## Desk Internals
 
