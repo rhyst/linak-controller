@@ -7,7 +7,7 @@ import yaml
 import asyncio
 import traceback 
 from signal import SIGINT, SIGTERM
-from bleak import BleakClient, discover, BleakError
+from bleak import BleakClient, discover, BleakError, BleakScanner
 import atexit
 
 IS_WINDOWS = os.name == 'nt'
@@ -52,6 +52,7 @@ config = {
     "sit_height": BASE_HEIGHT + 63,
     "height_tolerance": 20,
     "adapter_name": 'hci0',
+    "scan_timeout": 5,
     "connection_timeout": 10,
     "sit": False,
     "stand": False,
@@ -82,6 +83,8 @@ parser.add_argument('--sit-height', dest='sit_height', type=int,
                     help="The height the desk should be at when sitting (mm)")
 parser.add_argument('--adapter', dest='adapter_name', type=str,
                     help="The bluetooth adapter device name")
+parser.add_argument('--scan-timeout', dest='scan', type=int,
+                    help="The timeout for bluetooth scan (seconds)")
 parser.add_argument('--connection-timeout', dest='connection_timeout', type=int,
                     help="The timeout for bluetooth connection (seconds)")
 cmd = parser.add_mutually_exclusive_group()
@@ -146,7 +149,6 @@ def should_unsubscribe():
     return unsubscribe_flag
 
 def ask_unsubscribe():
-    print('Disconnecting')
     global unsubscribe_flag
     unsubscribe_flag = True
 
@@ -208,16 +210,28 @@ async def move_to(client, target):
             tasks.append(move_down(client))
         await asyncio.gather(*[task for task in tasks])
 
-if IS_LINUX:
-    client = BleakClient(config['mac_address'], timeout=config['connection_timeout'], device=config['adapter_name'])
-if IS_WINDOWS:
-    client = BleakClient(config['mac_address'], timeout=config['connection_timeout'])
+
+client = None
 
 async def run():
     """Begin the action specified by command line arguments and config"""
+    global client
     try:
-        print('Connecting')
-        await client.connect()
+        print('Scanning\r', end ="")
+        desk = None
+        scanner = BleakScanner()
+        devices = await scanner.discover(device=config['adapter_name'], timeout=config['scan_timeout'])
+        for device in devices:
+            if (device.address == config['mac_address']):
+                print('Scanning - Desk Found')
+                desk = device
+        if not desk:
+            print('Scanning - Desk Not Found')
+            os._exit(1)
+
+        print('Connecting\r', end ="")
+        client = BleakClient(desk, device=config['adapter_name'])
+        await client.connect(timeout=config['connection_timeout'])
 
         def disconnect_callback(client):
             print("Lost connection with {}".format(client.address))
@@ -258,9 +272,10 @@ def main():
     loop.run_until_complete(run())
 
     if client:
+        print('Disconnecting\r', end="")
         loop = asyncio.get_event_loop()
         loop.run_until_complete(client.disconnect())
-        print('Disconnected')
+        print('Disconnected ')
 
     loop.stop()
     loop.close()
