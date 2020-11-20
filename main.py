@@ -272,10 +272,10 @@ def main():
     loop.run_until_complete(run())
 
     if client:
-        print('Disconnecting\r', end="")
+        print('\rDisconnecting\r', end="")
         loop = asyncio.get_event_loop()
         loop.run_until_complete(client.disconnect())
-        print('Disconnected ')
+        print('Disconnected         ')
 
     loop.stop()
     loop.close()
