@@ -11,6 +11,7 @@ from bleak import BleakClient, BleakError, BleakScanner
 import atexit
 import pickle
 from pickle import UnpicklingError
+from discover import get_devices
 
 IS_LINUX = os.name == 'posix'
 
@@ -99,9 +100,17 @@ cmd.add_argument('--monitor', dest='monitor', action='store_true',
                  help="Monitor desk height and speed")
 cmd.add_argument('--move-to',dest='move_to', type=int,
                  help="Move desk to specified height (mm)")
+cmd.add_argument('--scan', dest='scan_adapter', help="Scan available desks.")
 
 args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
 config.update(args)
+
+if 'scan_adapter' in config:
+    print("Scanning devices")
+    devices = get_devices(config['scan_adapter'])
+    for device in devices:
+        print(device)
+    quit(0)
 
 if not config['mac_address']:
     parser.error("Mac address must be provided")
