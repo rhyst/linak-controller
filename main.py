@@ -7,10 +7,11 @@ import yaml
 import asyncio
 import traceback 
 from signal import SIGINT, SIGTERM
-from bleak import BleakClient, discover, BleakError, BleakScanner
+from bleak import BleakClient, BleakError, BleakScanner
 import atexit
+import pickle
+from pickle import UnpicklingError
 
-IS_WINDOWS = os.name == 'nt'
 IS_LINUX = os.name == 'posix'
 
 # HELPER FUNCTIONS
@@ -210,6 +211,42 @@ async def move_to(client, target):
             tasks.append(move_down(client))
         await asyncio.gather(*[task for task in tasks])
 
+class AddressDoesNotMatch(BaseException):
+    """Exception when the pickled desk address does not match the current config address"""
+
+def unpickle_desk():
+    """Load a Bleak device config from a pickle file and check that it is the correct device"""
+    desk = None
+    with open("desk.pickle",'rb') as f:
+        desk = pickle.load(f)
+        if desk.address != config['mac_address']:
+            raise AddressDoesNotMatch()
+    return desk
+
+async def scan():
+    """Scan for a bluetooth device with the configured address and return it"""
+    print('Scanning\r', end ="")
+    scanner = BleakScanner()
+    devices = await scanner.discover(device=config['adapter_name'], timeout=config['scan_timeout'])
+    for device in devices:
+        if (device.address == config['mac_address']):
+            print('Scanning - Desk Found')
+            return device
+    print('Scanning - Desk Not Found')
+    return None
+
+async def connect(desk, exit_on_fail = False):
+    """Attempt to connect to the desk"""
+    try:
+        print('Connecting\r', end ="")
+        client = BleakClient(desk, device=config['adapter_name'])
+        await client.connect(timeout=config['connection_timeout'])
+        return client 
+    except BleakError as e:
+        print('Connecting failed')
+        if exit_on_fail:
+            os._exit(1)
+        raise e
 
 client = None
 
@@ -217,21 +254,19 @@ async def run():
     """Begin the action specified by command line arguments and config"""
     global client
     try:
-        print('Scanning\r', end ="")
         desk = None
-        scanner = BleakScanner()
-        devices = await scanner.discover(device=config['adapter_name'], timeout=config['scan_timeout'])
-        for device in devices:
-            if (device.address == config['mac_address']):
-                print('Scanning - Desk Found')
-                desk = device
-        if not desk:
-            print('Scanning - Desk Not Found')
-            os._exit(1)
-
-        print('Connecting\r', end ="")
-        client = BleakClient(desk, device=config['adapter_name'])
-        await client.connect(timeout=config['connection_timeout'])
+        try:
+            # Attempt to load and connect to the pickled desk
+            desk = unpickle_desk()
+            client = await connect(desk)
+        except (IOError, UnpicklingError, BleakError, AddressDoesNotMatch):
+            # If that fails then rescan for the desk and then attempt to connect
+            desk = await scan()
+            client =  await connect(desk, exit_on_fail=True)
+            
+        # Cache the Bleak device config to connect more quickly in future
+        with open('desk.pickle', 'wb') as f: 
+            pickle.dump(desk, f)
 
         def disconnect_callback(client):
             print("Lost connection with {}".format(client.address))

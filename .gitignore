@@ -2,3 +2,4 @@ ref/
 venv/
 config.yaml
 .vscode
+desk.pickle
