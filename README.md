@@ -26,7 +26,7 @@ Config options:
 - `stand_height` - The standing height (mm) from the floor of the desk Default `1040`.
 - `sit_height` - The standing height (mm) from the floor of the desk. Default `683`.
 - `adapter_name` - The adapter name for the bluetooth adapter to use for the connection (Linux only). Default `hci0`
-- `height_tolerance` - Distance (mm) between reported height and target height before ceasing move commands. Default `20`
+- `height_tolerance` - Distance (mm) between reported height and target height before ceasing move commands. Default `2.0`
 - `scan_timeout` - Timeout to scan for the device (seconds). Default `5`
 - `connection_timeout` - Timeout to obtain connection (seconds). Default `10`
 
