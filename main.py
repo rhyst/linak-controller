@@ -51,7 +51,7 @@ config = {
     "mac_address": None,
     "stand_height": BASE_HEIGHT + 420,
     "sit_height": BASE_HEIGHT + 63,
-    "height_tolerance": 20,
+    "height_tolerance": 2.0,
     "adapter_name": 'hci0',
     "scan_timeout": 5,
     "connection_timeout": 10,
@@ -82,6 +82,8 @@ parser.add_argument('--stand-height', dest='stand_height', type=int,
                     help="The height the desk should be at when standing (mm)")
 parser.add_argument('--sit-height', dest='sit_height', type=int,
                     help="The height the desk should be at when sitting (mm)")
+parser.add_argument('--height-tolerance', dest='height_tolerance', type=float,
+                    help="Distance between reported height and target height before ceasing move commands (mm)")
 parser.add_argument('--adapter', dest='adapter_name', type=str,
                     help="The bluetooth adapter device name")
 parser.add_argument('--scan-timeout', dest='scan', type=int,
@@ -115,6 +117,7 @@ if config['stand_height'] > MAX_HEIGHT:
 
 config['stand_height_raw'] = mmToRaw(config['stand_height'])
 config['sit_height_raw'] = mmToRaw(config['sit_height'])
+config['height_tolerance_raw'] = 10 * config['height_tolerance']
 if config['move_to']:
     config['move_to_raw'] = mmToRaw(config['move_to'])
 
@@ -122,12 +125,12 @@ if config['move_to']:
 
 def print_height_data(sender, data):
     height, speed = struct.unpack("<Hh", data)
-    print("Current height: {}mm, speed: {}".format(rawToMM(height), rawToSpeed(speed)))
+    print("Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(rawToMM(height), rawToSpeed(speed)))
 
 def has_reached_target(height, target):
     # The notified height values seem a bit behind so try to stop before
     # reaching the target value to prevent overshooting
-    return (abs(height - target) <= config['height_tolerance'])
+    return (abs(height - target) <= config['height_tolerance_raw'])
 
 async def move_up(client):
     await client.write_gatt_char(UUID_COMMAND, COMMAND_UP)
@@ -179,11 +182,10 @@ async def move_to(client, target):
         global count
         height, speed = struct.unpack("<Hh", data)
         count = count + 1
-        print("Current height: {}mm (target: {}mm) speed {}mm/s".format(rawToMM(height), rawToMM(target), rawToSpeed(speed)))
+        print("Height: {:4.0f}mm Target: {:4.0f}mm Speed: {:2.0f}mm/s".format(rawToMM(height), rawToMM(target), rawToSpeed(speed)))
 
         # Stop if we have reached the target
         if has_reached_target(height, target):
-            print("Stopping at height: {}mm (target: {}mm)".format(rawToMM(height), rawToMM(target)))
             asyncio.create_task(stop(client))
             ask_unsubscribe()
         # Or resend the movement command if we have not yet reached the
@@ -276,19 +278,28 @@ async def run():
         print("Connected {}".format(config['mac_address']))
         # Always print current height
         initial_height, speed = struct.unpack("<Hh", await client.read_gatt_char(UUID_HEIGHT))
-        print("Initial height: {}mm".format(rawToMM(initial_height)))
+        print("Height: {:4.0f}mm".format(rawToMM(initial_height)))
+        target = None
         if config['monitor']:
             # Print changes to height data
             await subscribe(client, UUID_HEIGHT, print_height_data)
         elif config['sit']:
             # Move to configured sit height
-            await move_to(client, config['sit_height_raw'])
+            target = config['sit_height_raw']
+            await move_to(client, target)
         elif config['stand']:
             # Move to configured stand height
-            await move_to(client, config['stand_height_raw'])
+            target = config['stand_height_raw']
+            await move_to(client, target)
         elif config['move_to']:
             # Move to custom height
-            await move_to(client, config['move_to_raw'])
+            target = config['move_to_raw']
+            await move_to(client, target)
+        if target:
+            # If we were moving to a target height, wait, then print the actual final height
+            await asyncio.sleep(1)
+            final_height, speed = struct.unpack("<Hh", await client.read_gatt_char(UUID_HEIGHT))
+            print("Final height: {:4.0f}mm Target: {:4.0f}mm)".format(rawToMM(final_height), rawToMM(target)))
     except BleakError as e:
         print(e)
     except Exception as e:
