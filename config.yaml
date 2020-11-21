@@ -1,7 +1,7 @@
 mac_address: AA:AA:AA:AA:AA:AA
 stand_height: 1040
 sit_height: 683
-height_tolerance: 20
+height_tolerance: 2.0
 scan_timeout: 5
 connection_timeout: 10
 adapter_name: hci0
