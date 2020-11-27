@@ -153,22 +153,22 @@ async def stop(client):
         # It doesn't like this on windows
         await client.write_gatt_char(UUID_REFERENCE_INPUT, COMMAND_REFERENCE_INPUT_STOP)
 
-unsubscribe_flag = False
+stop_flag = False
 
-def should_unsubscribe():
-    global unsubscribe_flag
-    return unsubscribe_flag
+def asked_to_stop():
+    global stop_flag
+    return stop_flag
 
-def ask_unsubscribe():
-    global unsubscribe_flag
-    unsubscribe_flag = True
+def ask_to_stop():
+    global stop_flag
+    stop_flag = True
 
 
 async def subscribe(client, uuid, callback):
     """Listen for notifications on a characteristic"""
     await client.start_notify(uuid, callback)
 
-    while not should_unsubscribe():
+    while not asked_to_stop():
         await asyncio.sleep(0.1)
 
     await client.stop_notify(uuid)
@@ -194,7 +194,7 @@ async def move_to(client, target):
         # Stop if we have reached the target
         if has_reached_target(height, target):
             asyncio.create_task(stop(client))
-            ask_unsubscribe()
+            ask_to_stop()
         # Or resend the movement command if we have not yet reached the
         # target.
         # Each movement command seems to run the desk motors for about 1
@@ -293,8 +293,9 @@ async def run():
         pickle_desk(desk)
 
         def disconnect_callback(client):
-            print("Lost connection with {}".format(client.address))
-            ask_unsubscribe()
+            if not asked_to_stop():
+                print("Lost connection with {}".format(client.address))
+            ask_to_stop()
         client.set_disconnected_callback(disconnect_callback)
 
         print("Connected {}".format(config['mac_address']))
@@ -335,12 +336,13 @@ def main():
         for sig in (SIGINT, SIGTERM):
             # We must run client.disconnect() so attempt to exit gracefully
             # Windows seems to care a lot less about this
-            loop.add_signal_handler(sig, ask_unsubscribe)
+            loop.add_signal_handler(sig, ask_to_stop)
 
     loop.run_until_complete(run())
 
     if client:
         print('\rDisconnecting\r', end="")
+        ask_to_stop()
         loop = asyncio.get_event_loop()
         loop.run_until_complete(client.disconnect())
         print('Disconnected         ')
