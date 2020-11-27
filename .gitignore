@@ -3,3 +3,4 @@ venv/
 config.yaml
 .vscode
 desk.pickle
+__pycache__/
