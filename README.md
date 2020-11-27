@@ -66,6 +66,12 @@ Move the desk to a certain height (mm) above the floor:
 python3 main.py --move-to 800
 ```
 
+Listing available bluetooth devices (using the configured `adapter_name`):
+
+```
+python main.py --scan
+```
+
 ## Recipes
 
 There is a page with a few examples of different ways to use the script: [RECIPES](RECIPES.md)
