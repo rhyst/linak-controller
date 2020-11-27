@@ -234,7 +234,7 @@ async def scan():
         if (device.address == config['mac_address']):
             print('Scanning - Desk Found')
             return device
-    print('Scanning - Desk Not Found')
+    print('Scanning - Desk {} Not Found'.format(config['mac_address']))
     return None
 
 async def connect(desk, exit_on_fail = False):
@@ -261,9 +261,11 @@ async def run():
             # Attempt to load and connect to the pickled desk
             desk = unpickle_desk()
             client = await connect(desk)
-        except (IOError, UnpicklingError, BleakError, AddressDoesNotMatch):
+        except (FileNotFoundError, UnpicklingError, BleakError, AddressDoesNotMatch):
             # If that fails then rescan for the desk and then attempt to connect
             desk = await scan()
+            if not desk:
+                os._exit(1)
             client =  await connect(desk, exit_on_fail=True)
             
         # Cache the Bleak device config to connect more quickly in future
