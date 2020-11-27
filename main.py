@@ -13,6 +13,7 @@ import pickle
 from pickle import UnpicklingError
 
 IS_LINUX = os.name == 'posix'
+IS_WINDOWS = os.name == 'nt'
 
 # HELPER FUNCTIONS
 
@@ -99,6 +100,8 @@ cmd.add_argument('--monitor', dest='monitor', action='store_true',
                  help="Monitor desk height and speed")
 cmd.add_argument('--move-to',dest='move_to', type=int,
                  help="Move desk to specified height (mm)")
+cmd.add_argument('--scan', dest='scan_adapter', action='store_true',
+                 help="Scan for devices using the configured adapter")
 
 args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
 config.update(args)
@@ -120,6 +123,10 @@ config['sit_height_raw'] = mmToRaw(config['sit_height'])
 config['height_tolerance_raw'] = 10 * config['height_tolerance']
 if config['move_to']:
     config['move_to_raw'] = mmToRaw(config['move_to'])
+
+if IS_WINDOWS:
+    # Windows doesn't use this paramter so rename it so it looks nice for the logs
+    config['adapter_name'] = 'default adapter'
 
 # MAIN PROGRAM
 
@@ -225,16 +232,18 @@ def unpickle_desk():
             raise AddressDoesNotMatch()
     return desk
 
-async def scan():
-    """Scan for a bluetooth device with the configured address and return it"""
+async def scan(mac_address = None):
+    """Scan for a bluetooth device with the configured address and return it or return all devices if no address specified"""
     print('Scanning\r', end ="")
     scanner = BleakScanner()
     devices = await scanner.discover(device=config['adapter_name'], timeout=config['scan_timeout'])
+    if not mac_address:
+        return devices
     for device in devices:
-        if (device.address == config['mac_address']):
+        if (device.address == mac_address):
             print('Scanning - Desk Found')
             return device
-    print('Scanning - Desk {} Not Found'.format(config['mac_address']))
+    print('Scanning - Desk {} Not Found'.format(mac_address))
     return None
 
 async def connect(desk, exit_on_fail = False):
@@ -256,6 +265,14 @@ async def run():
     """Begin the action specified by command line arguments and config"""
     global client
     try:
+        # Scanning doesn't require a connection so do it first and exit
+        if config['scan_adapter']:
+            devices = await scan()
+            print('Found {} devices using {}'.format(len(devices), config['adapter_name']))
+            for device in devices:
+                print(device)
+            os._exit(0)
+
         desk = None
         try:
             # Attempt to load and connect to the pickled desk
@@ -263,7 +280,7 @@ async def run():
             client = await connect(desk)
         except (FileNotFoundError, UnpicklingError, BleakError, AddressDoesNotMatch):
             # If that fails then rescan for the desk and then attempt to connect
-            desk = await scan()
+            desk = await scan(config['mac_address'])
             if not desk:
                 os._exit(1)
             client =  await connect(desk, exit_on_fail=True)
