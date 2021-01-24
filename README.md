@@ -29,6 +29,7 @@ Config options:
 - `height_tolerance` - Distance (mm) between reported height and target height before ceasing move commands. Default `2.0`
 - `scan_timeout` - Timeout to scan for the device (seconds). Default `5`
 - `connection_timeout` - Timeout to obtain connection (seconds). Default `10`
+- `movement_timeout` - Timeout for waiting for the desk to reach the specified height (seconds). Default `30`
 
 Device MAC addresses can be found using `bluetoothctl` and blueooth adapter names can be found with `hcitool dev` on linux, and on Windows you can use [Bluetooth LE Explorer](https://www.microsoft.com/en-us/p/bluetooth-le-explorer/9n0ztkf1qd98?activetab=pivot:overviewtab).
 
