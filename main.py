@@ -56,6 +56,7 @@ config = {
     "adapter_name": 'hci0',
     "scan_timeout": 5,
     "connection_timeout": 10,
+    "movement_timeout": 30,
     "sit": False,
     "stand": False,
     "monitor": False,
@@ -91,6 +92,8 @@ parser.add_argument('--scan-timeout', dest='scan', type=int,
                     help="The timeout for bluetooth scan (seconds)")
 parser.add_argument('--connection-timeout', dest='connection_timeout', type=int,
                     help="The timeout for bluetooth connection (seconds)")
+parser.add_argument('--movement-timeout', dest='movement_timeout', type=int,
+                    help="The timeout for waiting for the desk to reach the specified height (seconds)")
 cmd = parser.add_mutually_exclusive_group()
 cmd.add_argument('--sit', dest='sit', action='store_true',
                  help="Move the desk to sitting height")
@@ -191,8 +194,12 @@ async def move_to(client, target):
         count = count + 1
         print("Height: {:4.0f}mm Target: {:4.0f}mm Speed: {:2.0f}mm/s".format(rawToMM(height), rawToMM(target), rawToSpeed(speed)))
 
-        # Stop if we have reached the target
-        if has_reached_target(height, target):
+       
+        # Stop if we have reached the target OR
+        # If you touch desk control while the script is running then movement
+        # callbacks stop. The final call will have speed 0 so detect that 
+        # and stop.
+        if  has_reached_target(height, target):
             asyncio.create_task(stop(client))
             ask_to_stop()
         # Or resend the movement command if we have not yet reached the
@@ -211,14 +218,18 @@ async def move_to(client, target):
             count = 0
 
     # Listen for changes to desk height and send first move command (if we are 
-    # not) already at the target height.
+    # not already at the target height).
     if not has_reached_target(initial_height, target):
         tasks = [ subscribe(client, UUID_HEIGHT, _move_to) ]
         if direction == "UP":
             tasks.append(move_up(client))
         elif direction == "DOWN":
             tasks.append(move_down(client))
-        await asyncio.gather(*[task for task in tasks])
+        try:
+            await asyncio.wait_for(asyncio.gather(*[task for task in tasks]), timeout=config['movement_timeout'])
+        except asyncio.TimeoutError as e:
+            print('Timed out while waiting for desk')
+            await client.stop_notify(UUID_HEIGHT)
 
 def unpickle_desk():
     """Load a Bleak device config from a pickle file and check that it is the correct device"""
