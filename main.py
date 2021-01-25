@@ -1,16 +1,13 @@
 #!python3
 import os
-import sys
 import struct
 import argparse
 import yaml
 import asyncio
-import traceback 
-from signal import SIGINT, SIGTERM
 from bleak import BleakClient, BleakError, BleakScanner
-import atexit
 import pickle
-from pickle import UnpicklingError
+import json
+import functools
 
 IS_LINUX = os.name == 'posix'
 IS_WINDOWS = os.name == 'nt'
@@ -40,6 +37,10 @@ COMMAND_REFERENCE_INPUT_STOP = bytearray(struct.pack("<H", 32769))
 COMMAND_REFERENCE_INPUT_UP = bytearray(struct.pack("<H", 32768))
 COMMAND_REFERENCE_INPUT_DOWN = bytearray(struct.pack("<H", 32767))
 
+# OTHER DEFINITIONS
+
+PICKLE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'desk.pickle')
+
 # CONFIGURATION SETUP
 
 # Height of the desk at it's lowest (in mm)
@@ -60,7 +61,9 @@ config = {
     "sit": False,
     "stand": False,
     "monitor": False,
-    "move_to": None
+    "move_to": None,
+    "server_address": "127.0.0.1",
+    "server_port": 9123
 }
 
 # Overwrite from config.yaml
@@ -94,6 +97,12 @@ parser.add_argument('--connection-timeout', dest='connection_timeout', type=int,
                     help="The timeout for bluetooth connection (seconds)")
 parser.add_argument('--movement-timeout', dest='movement_timeout', type=int,
                     help="The timeout for waiting for the desk to reach the specified height (seconds)")
+parser.add_argument('--forward', dest='forward', action='store_true',
+                 help="Forward any commands to a server")
+parser.add_argument('--server-address', dest='server_address', type=str,
+                 help="The address the server should run at")
+parser.add_argument('--server_port', dest='server_port', type=int,
+                 help="The port the server should run on")
 cmd = parser.add_mutually_exclusive_group()
 cmd.add_argument('--sit', dest='sit', action='store_true',
                  help="Move the desk to sitting height")
@@ -105,6 +114,9 @@ cmd.add_argument('--move-to',dest='move_to', type=int,
                  help="Move desk to specified height (mm)")
 cmd.add_argument('--scan', dest='scan_adapter', action='store_true',
                  help="Scan for devices using the configured adapter")
+cmd.add_argument('--server', dest='server', action='store_true',
+                 help="Run as a server to accept forwarded commands")
+
 
 args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
 config.update(args)
@@ -156,25 +168,16 @@ async def stop(client):
         # It doesn't like this on windows
         await client.write_gatt_char(UUID_REFERENCE_INPUT, COMMAND_REFERENCE_INPUT_STOP)
 
-stop_flag = False
-
-def asked_to_stop():
-    global stop_flag
-    return stop_flag
-
-def ask_to_stop():
-    global stop_flag
-    stop_flag = True
-
-
 async def subscribe(client, uuid, callback):
     """Listen for notifications on a characteristic"""
     await client.start_notify(uuid, callback)
 
-    while not asked_to_stop():
-        await asyncio.sleep(0.1)
-
-    await client.stop_notify(uuid)
+async def unsubscribe(client, uuid):
+    try:
+        await client.stop_notify(uuid)
+    except KeyError:
+        # This happens on windows, I don't know why
+        pass
 
 async def move_to(client, target):
     """Move the desk to a specified height"""
@@ -186,6 +189,8 @@ async def move_to(client, target):
     
     # Set up callback to run when the desk height changes. It will resend
     # movement commands until the desk has reached the target height.
+    loop = asyncio.get_event_loop()
+    move_done = loop.create_future()
     global count
     count = 0
     def _move_to(sender, data):
@@ -199,9 +204,14 @@ async def move_to(client, target):
         # If you touch desk control while the script is running then movement
         # callbacks stop. The final call will have speed 0 so detect that 
         # and stop.
-        if  has_reached_target(height, target):
+        if speed == 0 or has_reached_target(height, target):
             asyncio.create_task(stop(client))
-            ask_to_stop()
+            asyncio.create_task(unsubscribe(client, UUID_HEIGHT))
+            try:
+                move_done.set_result(True)
+            except asyncio.exceptions.InvalidStateError:
+                # This happens on windows, I dont know why
+                pass 
         # Or resend the movement command if we have not yet reached the
         # target.
         # Each movement command seems to run the desk motors for about 1
@@ -220,22 +230,23 @@ async def move_to(client, target):
     # Listen for changes to desk height and send first move command (if we are 
     # not already at the target height).
     if not has_reached_target(initial_height, target):
-        tasks = [ subscribe(client, UUID_HEIGHT, _move_to) ]
+        await subscribe(client, UUID_HEIGHT, _move_to)
         if direction == "UP":
-            tasks.append(move_up(client))
+            asyncio.create_task(move_up(client))
         elif direction == "DOWN":
-            tasks.append(move_down(client))
+            asyncio.create_task(move_down(client))
         try:
-            await asyncio.wait_for(asyncio.gather(*[task for task in tasks]), timeout=config['movement_timeout'])
+            await asyncio.wait_for(move_done, timeout=config['movement_timeout'])
         except asyncio.TimeoutError as e:
             print('Timed out while waiting for desk')
-            await client.stop_notify(UUID_HEIGHT)
+            await unsubscribe(client, UUID_HEIGHT)
+
 
 def unpickle_desk():
     """Load a Bleak device config from a pickle file and check that it is the correct device"""
     try:
         if not IS_WINDOWS:
-            with open("desk.pickle",'rb') as f:
+            with open(PICKLE_FILE,'rb') as f:
                 desk = pickle.load(f)
                 if desk.address == config['mac_address']:
                     return desk
@@ -246,7 +257,7 @@ def unpickle_desk():
 def pickle_desk(desk):
     """Attempt to pickle the desk"""
     if not IS_WINDOWS:
-        with open('desk.pickle', 'wb') as f: 
+        with open(PICKLE_FILE, 'wb') as f: 
             pickle.dump(desk, f)
 
 async def scan(mac_address = None):
@@ -255,6 +266,9 @@ async def scan(mac_address = None):
     scanner = BleakScanner()
     devices = await scanner.discover(device=config['adapter_name'], timeout=config['scan_timeout'])
     if not mac_address:
+        print('Found {} devices using {}'.format(len(devices), config['adapter_name']))
+        for device in devices:
+            print(device)
         return devices
     for device in devices:
         if (device.address == mac_address):
@@ -263,103 +277,118 @@ async def scan(mac_address = None):
     print('Scanning - Desk {} Not Found'.format(mac_address))
     return None
 
-async def connect(desk):
+async def connect(client = None):
     """Attempt to connect to the desk"""
+    # Attempt to load and connect to the pickled desk
+    desk = unpickle_desk()
+    if not desk:
+        # If that fails then rescan for the desk
+        desk = await scan(config['mac_address'])
+    if not desk:
+        print('Could not find desk {}'.format(config['mac_address']))
+        os._exit(1)
+    # Cache the Bleak device config to connect more quickly in future
+    pickle_desk(desk)
     try:
         print('Connecting\r', end ="")
-        client = BleakClient(desk, device=config['adapter_name'])
+        if not client:
+            client = BleakClient(desk, device=config['adapter_name'])
         await client.connect(timeout=config['connection_timeout'])
+        print("Connected {}".format(config['mac_address']))
         return client 
     except BleakError as e:
         print('Connecting failed')
         os._exit(1)
-        raise e
 
-client = None
+async def disconnect(client):
+    if client.is_connected:
+        await client.disconnect()
 
-async def run():
+async def run_command(client, config):
     """Begin the action specified by command line arguments and config"""
-    global client
-    try:
-        # Scanning doesn't require a connection so do it first and exit
-        if config['scan_adapter']:
-            devices = await scan()
-            print('Found {} devices using {}'.format(len(devices), config['adapter_name']))
-            for device in devices:
-                print(device)
-            os._exit(0)
-
-        # Attempt to load and connect to the pickled desk
-        desk = unpickle_desk()
-        if not desk:
-            # If that fails then rescan for the desk
-            desk = await scan(config['mac_address'])
-        if not desk:
-            print('Could not find desk {}'.format(config['mac_address']))
-            os._exit(1)
-        
-        client = await connect(desk)
-            
-        # Cache the Bleak device config to connect more quickly in future
-        pickle_desk(desk)
-
-        def disconnect_callback(client):
-            if not asked_to_stop():
-                print("Lost connection with {}".format(client.address))
-            ask_to_stop()
-        client.set_disconnected_callback(disconnect_callback)
-
-        print("Connected {}".format(config['mac_address']))
-        # Always print current height
-        initial_height, speed = struct.unpack("<Hh", await client.read_gatt_char(UUID_HEIGHT))
-        print("Height: {:4.0f}mm".format(rawToMM(initial_height)))
-        target = None
-        if config['monitor']:
-            # Print changes to height data
-            await subscribe(client, UUID_HEIGHT, print_height_data)
-        elif config['sit']:
-            # Move to configured sit height
-            target = config['sit_height_raw']
-            await move_to(client, target)
-        elif config['stand']:
-            # Move to configured stand height
-            target = config['stand_height_raw']
-            await move_to(client, target)
-        elif config['move_to']:
-            # Move to custom height
-            target = config['move_to_raw']
-            await move_to(client, target)
-        if target:
-            # If we were moving to a target height, wait, then print the actual final height
-            await asyncio.sleep(1)
-            final_height, speed = struct.unpack("<Hh", await client.read_gatt_char(UUID_HEIGHT))
-            print("Final height: {:4.0f}mm Target: {:4.0f}mm)".format(rawToMM(final_height), rawToMM(target)))
-    except BleakError as e:
-        print(e)
-    except Exception as e:
-        traceback.print_exc() 
-
-def main():
-    """Set up the async event loop and signal handlers"""
-    loop = asyncio.get_event_loop()
-
-    if IS_LINUX:
-        for sig in (SIGINT, SIGTERM):
-            # We must run client.disconnect() so attempt to exit gracefully
-            # Windows seems to care a lot less about this
-            loop.add_signal_handler(sig, ask_to_stop)
-
-    loop.run_until_complete(run())
-
-    if client:
-        print('\rDisconnecting\r', end="")
-        ask_to_stop()
+    # Always print current height
+    initial_height, speed = struct.unpack("<Hh", await client.read_gatt_char(UUID_HEIGHT))
+    print("Height: {:4.0f}mm".format(rawToMM(initial_height)))
+    target = None
+    if config['monitor']:
+        # Print changes to height data
+        await subscribe(client, UUID_HEIGHT, print_height_data)
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(client.disconnect())
-        print('Disconnected         ')
+        wait = loop.create_future()
+        await wait
+    elif config['sit']:
+        # Move to configured sit height
+        target = config['sit_height_raw']
+        await move_to(client, target)
+    elif config['stand']:
+        # Move to configured stand height
+        target = config['stand_height_raw']
+        await move_to(client, target)
+    elif config['move_to']:
+        # Move to custom height
+        target = config['move_to_raw']
+        await move_to(client, target)
+    if target:
+        # If we were moving to a target height, wait, then print the actual final height
+        await asyncio.sleep(1)
+        final_height, speed = struct.unpack("<Hh", await client.read_gatt_char(UUID_HEIGHT))
+        print("Final height: {:4.0f}mm (Target: {:4.0f}mm)".format(rawToMM(final_height), rawToMM(target)))
 
-    loop.stop()
-    loop.close()
+async def run_server(client, config):
+    """Start a tcp server to listen for commands"""
+    def disconnect_callback(client, _ = None):
+        print("Lost connection with {}".format(client.address))
+        asyncio.create_task(connect(client))
+    client.set_disconnected_callback(disconnect_callback)
+    server = await asyncio.start_server(functools.partial(run_forwarded_command, client, config), config['server_address'], config['server_port'])
+    print("Server listening")
+    await server.serve_forever()
+
+async def run_forwarded_command(client, config, reader, writer):
+    """Run commands received by the tcp server"""
+    print("Received command")
+    request = None
+    request = (await reader.read()).decode('utf8')
+    forwarded_config = json.loads(str(request))
+    merged_config = {**config, **forwarded_config}
+    await run_command(client, merged_config)
+    writer.close()
+
+async def forward_command(config):
+    allowed_keys = ["sit", "stand", "move_to", "move_to_raw"]
+    forwarded_config = { key: config[key] for key in allowed_keys if key in config }
+    reader, writer = await asyncio.open_connection('127.0.0.1', 9123)
+    writer.write(json.dumps(forwarded_config).encode())
+    writer.close()
+
+async def main():
+    """Set up the async event loop and signal handlers"""
+    try:
+        client = None
+        # Forward and scan don't require a connection so run them and exit
+        if config['forward']:
+            await forward_command(config)
+        elif config['scan_adapter']:
+            await scan()
+        else:
+            # Server and other commands do require a connection so set one up
+            client = await connect()
+            if config['server']:
+                await run_server(client, config)
+            else:
+                await run_command(client, config)
+    except Exception:
+        # These exceptions are set up weird. Do not like.
+        pass
+    finally:
+        if client:
+            print('\rDisconnecting\r', end="")
+            await stop(client)
+            await disconnect(client)
+            print('Disconnected         ')
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt as e:
+        pass
