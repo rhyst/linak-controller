@@ -30,6 +30,10 @@ Config options:
 - `scan_timeout` - Timeout to scan for the device (seconds). Default `5`
 - `connection_timeout` - Timeout to obtain connection (seconds). Default `10`
 - `movement_timeout` - Timeout for waiting for the desk to reach the specified height (seconds). Default `30`
+- `forward` - Forward commands to a script running as a server.
+- `server` - Run this script as a server to accept forwarded commands.
+- `server_address` - The address the server should run at. Default `127.0.0.1`
+- `server_port` - The port the server should run on. Default `9123`
 
 Device MAC addresses can be found using `bluetoothctl` and blueooth adapter names can be found with `hcitool dev` on linux, and on Windows you can use [Bluetooth LE Explorer](https://www.microsoft.com/en-us/p/bluetooth-le-explorer/9n0ztkf1qd98?activetab=pivot:overviewtab).
 
@@ -71,6 +75,18 @@ Listing available bluetooth devices (using the configured `adapter_name`):
 
 ```
 python main.py --scan
+```
+
+To run the script as a server, which will maintain the connection and provide quicker response times:
+
+```
+python main.py --server
+```
+
+And to send commands to the server add the forward argument:
+
+```
+python main.py --forward --stand
 ```
 
 ## Recipes
