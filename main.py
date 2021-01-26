@@ -140,7 +140,7 @@ if config['move_to']:
     config['move_to_raw'] = mmToRaw(config['move_to'])
 
 if IS_WINDOWS:
-    # Windows doesn't use this paramter so rename it so it looks nice for the logs
+    # Windows doesn't use this parameter so rename it so it looks nice for the logs
     config['adapter_name'] = 'default adapter'
 
 # MAIN PROGRAM
@@ -301,6 +301,7 @@ async def connect(client = None):
         os._exit(1)
 
 async def disconnect(client):
+    """Attempt to disconnect cleanly"""
     if client.is_connected:
         await client.disconnect()
 
@@ -347,7 +348,6 @@ async def run_server(client, config):
 async def run_forwarded_command(client, config, reader, writer):
     """Run commands received by the tcp server"""
     print("Received command")
-    request = None
     request = (await reader.read()).decode('utf8')
     forwarded_config = json.loads(str(request))
     merged_config = {**config, **forwarded_config}
@@ -355,9 +355,10 @@ async def run_forwarded_command(client, config, reader, writer):
     writer.close()
 
 async def forward_command(config):
+    """Send commands to the tcp server"""
     allowed_keys = ["sit", "stand", "move_to", "move_to_raw"]
     forwarded_config = { key: config[key] for key in allowed_keys if key in config }
-    reader, writer = await asyncio.open_connection('127.0.0.1', 9123)
+    reader, writer = await asyncio.open_connection(config['server_address'], config['server_port'])
     writer.write(json.dumps(forwarded_config).encode())
     writer.close()
 
@@ -390,5 +391,5 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         pass
