@@ -1,6 +1,8 @@
 ref/
 venv/
-config.yaml
 .vscode
 desk.pickle
 __pycache__/
+*.egg-info
+dist/
+build/

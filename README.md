@@ -10,15 +10,15 @@ The desk should be connected and paired to the computer.
 
 ### Install
 
-Install the Python requirements found in `requirements.txt`:
+Install using pip:
 
 ```
-pip install -r requirements.txt
+pip install idasen-controller
 ```
 
 ### Configuration
 
-Configuration can either be provided with a file, or via command line arguments. Use `--help` to see the command line arguments help. Edit `config.yaml` if you prefer your config to be in a file.
+Configuration can either be provided with a file, or via command line arguments. Use `--help` to see the command line arguments help. Edit `<config_dir>/config.yaml` if you prefer your config to be in a file. `<config_dir>` is normally `~/.config/idasen-controller` on Linux and `C:\Users\<user>\AppData\Local\idasen-controller\idasen-controller` on Windows.
 
 Config options:
 
@@ -30,10 +30,8 @@ Config options:
 - `scan_timeout` - Timeout to scan for the device (seconds). Default `5`
 - `connection_timeout` - Timeout to obtain connection (seconds). Default `10`
 - `movement_timeout` - Timeout for waiting for the desk to reach the specified height (seconds). Default `30`
-- `forward` - Forward commands to a script running as a server.
-- `server` - Run this script as a server to accept forwarded commands.
-- `server_address` - The address the server should run at. Default `127.0.0.1`
-- `server_port` - The port the server should run on. Default `9123`
+- `server_address` - The address the server should run at (if running server). Default `127.0.0.1`
+- `server_port` - The port the server should run on (if running server). Default `9123`
 
 Device MAC addresses can be found using `bluetoothctl` and blueooth adapter names can be found with `hcitool dev` on linux, and on Windows you can use [Bluetooth LE Explorer](https://www.microsoft.com/en-us/p/bluetooth-le-explorer/9n0ztkf1qd98?activetab=pivot:overviewtab).
 
@@ -44,54 +42,78 @@ Device MAC addresses can be found using `bluetoothctl` and blueooth adapter name
 To print the current desk height:
 
 ```
-python3 main.py
+idasen-controller
 ```
 
 To monitor for changes to height (and speed):
 
 ```
-python3 main.py --monitor
+idasen-controller --monitor
 ```
 
 Assuming the config file is populated to move the desk to standing position:
 
 ```
-python3 main.py --stand
+idasen-controller --stand
 ```
 
 Assuming the config file is populated to move the desk to sitting position:
 
 ```
-python3 main.py --sit
+idasen-controller --sit
 ```
 
 Move the desk to a certain height (mm) above the floor:
 
 ```
-python3 main.py --move-to 800
+idasen-controller --move-to 800
 ```
 
 Listing available bluetooth devices (using the configured `adapter_name`):
 
 ```
-python main.py --scan
+idasen-controller --scan
 ```
 
 To run the script as a server, which will maintain the connection and provide quicker response times:
 
 ```
-python main.py --server
+idasen-controller --server
 ```
 
 And to send commands to the server add the forward argument:
 
 ```
-python main.py --forward --stand
+idasen-controller --forward --stand
 ```
+
+To specify a path to a config file:
+
+```
+idasen-controller --config <path>
+```
+
+### Connection times
+
+On Linux the script is able to cache the connection details so after the first connection subsequent commands should be very quick. On Windows this is not possible and so the script must scan for and connect to the desk every time a command is sent. One option is to reduce the `scan_timeout`. I have found that it can work well set to just `1` second. Also the server mode is intended as another workaround for this. Run the script once with `--server` which will start a persistent server and maintain a connection to the desk. Then when sending commands (like `--stand` or `--sit`) just add the additional argument `--forward` to forward the command to the server. The server should already have a connection so the desk should respond much quicker.
 
 ## Recipes
 
 There is a page with a few examples of different ways to use the script: [RECIPES](RECIPES.md)
+
+## Development
+
+To run the script without installing via pip first install the requirements:
+
+```
+pip install -r requirements.txt
+```
+
+Then you can run all the same commands with:
+
+```
+python idasen_controller/main.py <command>
+```
 
 ## Desk Internals
 

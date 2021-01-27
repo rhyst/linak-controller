@@ -1,5 +1,6 @@
 #!python3
 import os
+import shutil
 import struct
 import argparse
 import yaml
@@ -8,6 +9,7 @@ from bleak import BleakClient, BleakError, BleakScanner
 import pickle
 import json
 import functools
+from appdirs import user_config_dir
 
 IS_LINUX = os.name == 'posix'
 IS_WINDOWS = os.name == 'nt'
@@ -38,8 +40,9 @@ COMMAND_REFERENCE_INPUT_UP = bytearray(struct.pack("<H", 32768))
 COMMAND_REFERENCE_INPUT_DOWN = bytearray(struct.pack("<H", 32767))
 
 # OTHER DEFINITIONS
-
-PICKLE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'desk.pickle')
+DEFAULT_CONFIG_DIR = user_config_dir('idasen-controller')
+DEFAULT_CONFIG_PATH = os.path.join(DEFAULT_CONFIG_DIR, 'config.yaml')
+PICKLE_FILE = os.path.join(DEFAULT_CONFIG_DIR, 'desk.pickle')
 
 # CONFIGURATION SETUP
 
@@ -49,6 +52,10 @@ BASE_HEIGHT = 620
 MAX_HEIGHT = 1270  # 6500
 
 # Default config
+if not os.path.isfile(DEFAULT_CONFIG_PATH):
+    os.makedirs(os.path.dirname(DEFAULT_CONFIG_PATH), exist_ok=True)
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), 'example', 'config.yaml'), DEFAULT_CONFIG_PATH)
+
 config = {
     "mac_address": None,
     "stand_height": BASE_HEIGHT + 420,
@@ -66,20 +73,6 @@ config = {
     "server_port": 9123
 }
 
-# Overwrite from config.yaml
-config_file = {}
-config_file_path = os.path.join(os.path.dirname(
-    os.path.realpath(__file__)), 'config.yaml')
-if (config_file_path):
-    with open(config_file_path, 'r') as stream:
-        try:
-            config_file = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print("Reading config.yaml failed")
-            exit(1)
-config.update(config_file)
-
-# Overwrite from command line args
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('--mac-address', dest='mac_address',
                     type=str, help="Mac address of the Idasen desk")
@@ -103,6 +96,8 @@ parser.add_argument('--server-address', dest='server_address', type=str,
                  help="The address the server should run at")
 parser.add_argument('--server_port', dest='server_port', type=int,
                  help="The port the server should run on")
+parser.add_argument('--config', dest='config', type=str,
+                 help="File path to the config file (Default: {})".format(DEFAULT_CONFIG_PATH), default=DEFAULT_CONFIG_PATH)
 cmd = parser.add_mutually_exclusive_group()
 cmd.add_argument('--sit', dest='sit', action='store_true',
                  help="Move the desk to sitting height")
@@ -117,8 +112,23 @@ cmd.add_argument('--scan', dest='scan_adapter', action='store_true',
 cmd.add_argument('--server', dest='server', action='store_true',
                  help="Run as a server to accept forwarded commands")
 
-
 args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
+
+# Overwrite config from config.yaml
+config_file = {}
+config_file_path = os.path.join(args['config'])
+if (config_file_path and os.path.isfile(config_file_path)):
+    with open(config_file_path, 'r') as stream:
+        try:
+            config_file = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print("Reading config.yaml failed")
+            exit(1)
+else:
+    print('No config file found')
+config.update(config_file)
+
+# Overwrite config from command line args
 config.update(args)
 
 if not config['mac_address']:
@@ -388,8 +398,11 @@ async def main():
             await disconnect(client)
             print('Disconnected         ')
 
-if __name__ == "__main__":
+def init():
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
         pass
+
+if __name__ == "__main__":
+    init()
