@@ -5,7 +5,6 @@ constantly==15.1.0
 hyperlink==21.0.0
 idna==3.1
 incremental==17.5.0
-pyaml==20.4.0
 PyHamcrest==2.0.2
 PyYAML==5.4.1
 six==1.15.0
