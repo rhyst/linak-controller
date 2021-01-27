@@ -1,3 +1,4 @@
+appdirs==1.4.4
 attrs==20.3.0
 Automat==20.2.0
 bleak==0.10.0
