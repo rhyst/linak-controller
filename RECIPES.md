@@ -9,12 +9,14 @@ You can use the [albert](https://github.com/albertlauncher/albert) launcher alon
 ```
 [Desktop Entry]
 Name=Desk - Sit
-Exec=/home/user/idasen-controller/venv/bin/python /home/user/idasen-controller/main.py --sit
+Exec=/path/to/idasen-controller --sit
 Icon=/home/user/idasen-controller/sit-icon.png
 Type=Application
 Comment=Lower desk to sitting height.
 
 ```
+
+(You can find the `idasen-controller` path with `where idasen-controller`)
 
 ## Windows
 
