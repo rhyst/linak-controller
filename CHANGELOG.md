@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - 2021-01-27
+
+No changes, just a reupload to fix bad Pypi upload of 1.0.1.
+
 ## [1.0.1] - 2021-01-27
 
 ### Added
