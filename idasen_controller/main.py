@@ -143,6 +143,7 @@ if config['sit_height'] < BASE_HEIGHT:
 if config['stand_height'] > MAX_HEIGHT:
     parser.error("Stand height must be less than {}".format(MAX_HEIGHT))
 
+config['mac_address'] = config['mac_address'].upper()
 config['stand_height_raw'] = mmToRaw(config['stand_height'])
 config['sit_height_raw'] = mmToRaw(config['sit_height'])
 config['height_tolerance_raw'] = 10 * config['height_tolerance']
