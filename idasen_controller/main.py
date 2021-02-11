@@ -287,7 +287,7 @@ async def scan(mac_address = None):
     print('Scanning - Desk {} Not Found'.format(mac_address))
     return None
 
-async def connect(client = None):
+async def connect(client = None, attempt = 0):
     """Attempt to connect to the desk"""
     # Attempt to load and connect to the pickled desk
     desk = unpickle_desk()
@@ -309,14 +309,14 @@ async def connect(client = None):
         print("Connected {}".format(config['mac_address']))
         return client 
     except BleakError as e:
-        if pickled:
+        if attempt == 0 and pickled:
             # Could be a bad pickle so remove it and try again
             try:
                 os.remove(PICKLE_FILE)
                 print('Connecting failed - Retrying without cached connection')
             except OSError:
                 pass
-            return await connect()
+            return await connect(attempt = attempt + 1)
         else:
             print('Connecting failed')
             print(e)
