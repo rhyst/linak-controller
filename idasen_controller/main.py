@@ -84,7 +84,7 @@ parser.add_argument('--height-tolerance', dest='height_tolerance', type=float,
                     help="Distance between reported height and target height before ceasing move commands (mm)")
 parser.add_argument('--adapter', dest='adapter_name', type=str,
                     help="The bluetooth adapter device name")
-parser.add_argument('--scan-timeout', dest='scan', type=int,
+parser.add_argument('--scan-timeout', dest='scan_timeout', type=int,
                     help="The timeout for bluetooth scan (seconds)")
 parser.add_argument('--connection-timeout', dest='connection_timeout', type=int,
                     help="The timeout for bluetooth connection (seconds)")
