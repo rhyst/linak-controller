@@ -1,24 +1,26 @@
 # idasen-controller
 
-The Idasen is a Linak standing desk sold by Ikea. It can be controlled by a physical switch on the desk or via bluetooth using an phone app. This is a script to control the Idasen via bluetooth from a computer.
+The Idasen is a Linak standing desk sold by Ikea. It can be controlled by a physical switch on the desk or via bluetooth using an phone app. This is a script to control the Idasen via bluetooth from a non-Android device.
 
 ## Set up
 
 ### Prerequisites
 
-The desk should be connected and paired to the computer.
+- Windows / Linux (if anyone successfully runs this on a Mac then let me know)
+- The device should have Python 3 (the script has been tested down to 3.7.3)
+- The desk should be paired to the device.
 
 ### Install
 
 Install using pip:
 
 ```
-pip install idasen-controller
+pip3 install idasen-controller
 ```
 
 ### Configuration
 
-Configuration can either be provided with a file, or via command line arguments. Use `--help` to see the command line arguments help. Edit `<config_dir>/config.yaml` if you prefer your config to be in a file. `<config_dir>` is normally `~/.config/idasen-controller` on Linux and `C:\Users\<user>\AppData\Local\idasen-controller\idasen-controller` on Windows.
+Configuration can be provided with a file, or via command line arguments. Use `--help` to see the command line arguments help. Edit `<config_dir>/config.yaml` if you prefer your config to be in a file. `<config_dir>` is normally `~/.config/idasen-controller` on Linux and `C:\Users\<user>\AppData\Local\idasen-controller\idasen-controller` on Windows.
 
 Config options:
 
@@ -93,7 +95,17 @@ To specify a path to a config file:
 idasen-controller --config <path>
 ```
 
-### Connection times
+## Troubleshooting
+
+### Connection failed
+
+The initial connection can fail for a variety of reasons, here are some things to try if it happens repeatedly:
+
+- Try ensuring that the desk is paired but _not_ connected before using the script.
+- Try increasing the `scan-timeout` and `connection-timeout`.
+- If on Linux then try deleting the pickle file that the script creates at `~/.config/desk.pickle`.
+
+### Connection / commands are slow
 
 On Linux the script is able to cache the connection details so after the first connection subsequent commands should be very quick. On Windows this is not possible and so the script must scan for and connect to the desk every time a command is sent. One option is to reduce the `scan_timeout`. I have found that it can work well set to just `1` second. Also the server mode is intended as another workaround for this. Run the script once with `--server` which will start a persistent server and maintain a connection to the desk. Then when sending commands (like `--stand` or `--sit`) just add the additional argument `--forward` to forward the command to the server. The server should already have a connection so the desk should respond much quicker.
 
@@ -106,13 +118,13 @@ There is a page with a few examples of different ways to use the script: [RECIPE
 To run the script without installing via pip first install the requirements:
 
 ```
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 Then you can run all the same commands with:
 
 ```
-python idasen_controller/main.py <command>
+python3 idasen_controller/main.py <command>
 ```
 
 ## Desk Internals
