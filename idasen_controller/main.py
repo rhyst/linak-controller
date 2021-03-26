@@ -267,15 +267,22 @@ def unpickle_desk():
 
 def pickle_desk(desk):
     """Attempt to pickle the desk"""
-    if not IS_WINDOWS:
-        with open(PICKLE_FILE, 'wb') as f: 
-            pickle.dump(desk, f)
+    try:
+        if not IS_WINDOWS:
+            with open(PICKLE_FILE, 'wb') as f:
+                pickle.dump(desk, f)
+    except TypeError:
+        # for OSX is not working: TypeError: Cannot pickle Objective-C objects
+        pass
 
 async def scan(mac_address = None):
     """Scan for a bluetooth device with the configured address and return it or return all devices if no address specified"""
     print('Scanning\r', end ="")
     scanner = BleakScanner()
     devices = await scanner.discover(device=config['adapter_name'], timeout=config['scan_timeout'])
+    for device in devices:
+        print('Bluetooth device name {} and MAC {}'.format(device.name, device.address))
+
     if not mac_address:
         print('Found {} devices using {}'.format(len(devices), config['adapter_name']))
         for device in devices:
