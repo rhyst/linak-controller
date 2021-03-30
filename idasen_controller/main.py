@@ -280,9 +280,6 @@ async def scan(mac_address = None):
     print('Scanning\r', end ="")
     scanner = BleakScanner()
     devices = await scanner.discover(device=config['adapter_name'], timeout=config['scan_timeout'])
-    for device in devices:
-        print('Bluetooth device name {} and MAC {}'.format(device.name, device.address))
-
     if not mac_address:
         print('Found {} devices using {}'.format(len(devices), config['adapter_name']))
         for device in devices:
