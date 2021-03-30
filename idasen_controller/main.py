@@ -1,5 +1,6 @@
 #!python3
 import os
+import sys
 import shutil
 import struct
 import argparse
@@ -11,8 +12,9 @@ import json
 import functools
 from appdirs import user_config_dir
 
-IS_LINUX = os.name == 'posix'
-IS_WINDOWS = os.name == 'nt'
+IS_LINUX = sys.platform == "linux" or sys.platform == "linux2"
+IS_WINDOWS = sys.platform == "win32"
+IS_MAC = sys.platform == "darwin"
 
 # HELPER FUNCTIONS
 
@@ -256,7 +258,7 @@ async def move_to(client, target):
 def unpickle_desk():
     """Load a Bleak device config from a pickle file and check that it is the correct device"""
     try:
-        if not IS_WINDOWS:
+        if IS_LINUX:
             with open(PICKLE_FILE,'rb') as f:
                 desk = pickle.load(f)
                 if desk.address == config['mac_address']:
@@ -267,7 +269,7 @@ def unpickle_desk():
 
 def pickle_desk(desk):
     """Attempt to pickle the desk"""
-    if not IS_WINDOWS:
+    if IS_LINUX:
         with open(PICKLE_FILE, 'wb') as f: 
             pickle.dump(desk, f)
 

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2021-03-30
+
+### Changed
+
+- Changed check for pickling connection to `IS_LINUX` after confirmation that you cannot pickle OSX bluetooth connection objects.
+
 ## [1.0.5] - 2021-02-11
 
 ### Changed

@@ -6,7 +6,7 @@ The Idasen is a Linak standing desk sold by Ikea. It can be controlled by a phys
 
 ### Prerequisites
 
-- Windows / Linux (if anyone successfully runs this on a Mac then let me know)
+- Windows / Linux / Mac
 - The device should have Python 3 (the script has been tested down to 3.7.3)
 - The desk should be paired to the device.
 
