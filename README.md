@@ -20,7 +20,10 @@ pip3 install idasen-controller
 
 ### Configuration
 
-Configuration can be provided with a file, or via command line arguments. Use `--help` to see the command line arguments help. Edit `<config_dir>/config.yaml` if you prefer your config to be in a file. `<config_dir>` is normally `~/.config/idasen-controller` on Linux and `C:\Users\<user>\AppData\Local\idasen-controller\idasen-controller` on Windows.
+Configuration can be provided with a file, or via command line arguments. Use `--help` to see the command line arguments help. Edit `<config_dir>/config.yaml` if you prefer your config to be in a file. `<config_dir>` is normally:
+- `~/.config/idasen-controller` on Linux
+- `C:\Users\<user>\AppData\Local\idasen-controller\idasen-controller` on Windows
+- `~/Library/Application Support/idasen-controller` on MacOS
 
 Config options:
 
@@ -35,7 +38,10 @@ Config options:
 - `server_address` - The address the server should run at (if running server). Default `127.0.0.1`
 - `server_port` - The port the server should run on (if running server). Default `9123`
 
-Device MAC addresses can be found using `bluetoothctl` and blueooth adapter names can be found with `hcitool dev` on linux, and on Windows you can use [Bluetooth LE Explorer](https://www.microsoft.com/en-us/p/bluetooth-le-explorer/9n0ztkf1qd98?activetab=pivot:overviewtab).
+#### Device MAC addresses
+- On Linux, device MAC addresses can be found using `bluetoothctl` and bluetooth adapter names can be found with `hcitool dev`
+- On Windows you can use [Bluetooth LE Explorer](https://www.microsoft.com/en-us/p/bluetooth-le-explorer/9n0ztkf1qd98?activetab=pivot:overviewtab).
+- On MacOS you can pair the device with [Bluetility](https://github.com/jnross/Bluetility), but you cannot use the MAC address, you must use the UUID found with `idasen-controller --scan`.
 
 ## Usage
 
@@ -108,6 +114,10 @@ The initial connection can fail for a variety of reasons, here are some things t
 ### Connection / commands are slow
 
 On Linux the script is able to cache the connection details so after the first connection subsequent commands should be very quick. On Windows this is not possible and so the script must scan for and connect to the desk every time a command is sent. One option is to reduce the `scan_timeout`. I have found that it can work well set to just `1` second. Also the server mode is intended as another workaround for this. Run the script once with `--server` which will start a persistent server and maintain a connection to the desk. Then when sending commands (like `--stand` or `--sit`) just add the additional argument `--forward` to forward the command to the server. The server should already have a connection so the desk should respond much quicker.
+
+### "abort" on MacOS
+
+On MacOS the process may quit with a vague message like `abort`. This could be because the application running the process doesn't have access to Bluetooth. To provide access, open `System Preferences -> Security & Privacy -> Privacy -> Bluetooth` and drag the application running the process into the list (eg. Terminal or iTerm2). [More info at the `bleak` issue](https://github.com/hbldh/bleak/issues/438#issuecomment-787125189)
 
 ## Recipes
 
