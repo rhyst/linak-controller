@@ -15,8 +15,19 @@ Type=Application
 Comment=Lower desk to sitting height.
 
 ```
-
 (You can find the `idasen-controller` path with `where idasen-controller`)
+
+### Scheduled standing periods
+
+You can add some cron jobs to automatically raise and lower your desk. This way, the healthier habit is automatic.
+The following cron raises the desk at 10 AM and 3 PM, and lowers it an hour later, Monday through Friday.
+```
+00 10 * * 1-5 python3 idasen-controller --stand
+00 11 * * 1-5 python3 idasen-controller --sit
+00 15 * * 1-5 python3 idasen-controller --stand
+00 16 * * 1-5 python3 idasen-controller --sit
+```
+
 
 ## Windows
 
