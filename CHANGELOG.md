@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.7] - 2022-01-07
+
+### Changed
+
+- Remove unneeded depenedencies which will hopefully make windows installs a bit smoother.
+
+
 ## [1.0.6] - 2021-03-30
 
 ### Changed
