@@ -276,15 +276,15 @@ def pickle_desk(desk):
 async def scan(mac_address = None):
     """Scan for a bluetooth device with the configured address and return it or return all devices if no address specified"""
     print('Scanning\r', end ="")
-    scanner = BleakScanner()
-    devices = await scanner.discover(device=config['adapter_name'], timeout=config['scan_timeout'])
     if not mac_address:
+        devices = await BleakScanner().discover(device=config['adapter_name'], timeout=config['scan_timeout'])
         print('Found {} devices using {}'.format(len(devices), config['adapter_name']))
         for device in devices:
             print(device)
         return devices
-    for device in devices:
-        if (device.address == mac_address):
+    else:
+        device = await BleakScanner.find_device_by_address(mac_address)
+        if device:
             print('Scanning - Desk Found')
             return device
     print('Scanning - Desk {} Not Found'.format(mac_address))
@@ -403,9 +403,9 @@ async def main():
                 await run_server(client, config)
             else:
                 await run_command(client, config)
-    except Exception:
-        # These exceptions are set up weird. Do not like.
-        pass
+    except Exception as e:
+        print("\nSomething unexpected went wrong:")
+        print(e)
     finally:
         if client:
             print('\rDisconnecting\r', end="")
