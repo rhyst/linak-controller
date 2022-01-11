@@ -1,0 +1,14 @@
+import os
+
+os.environ["BLEAK_LOGGING"] = "1"
+
+import asyncio
+from bleak import BleakClient, BleakScanner
+
+address = "E8:5B:5B:24:22:E4" # YOUR MAC ADDRESS
+
+async def run(address):
+    async with BleakClient(address) as client:
+        print(await client.connect())
+
+asyncio.run(run(address))
