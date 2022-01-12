@@ -48,20 +48,21 @@ PICKLE_FILE = os.path.join(DEFAULT_CONFIG_DIR, 'desk.pickle')
 
 # CONFIGURATION SETUP
 
-# Height of the desk at it's lowest (in mm)
-# I assume this is the same for all Idasen desks
-BASE_HEIGHT = 620
-MAX_HEIGHT = 1270  # 6500
-
 # Default config
 if not os.path.isfile(DEFAULT_CONFIG_PATH):
     os.makedirs(os.path.dirname(DEFAULT_CONFIG_PATH), exist_ok=True)
     shutil.copyfile(os.path.join(os.path.dirname(__file__), 'example', 'config.yaml'), DEFAULT_CONFIG_PATH)
 
+# Height of the desk at it's lowest (in mm)
+DEFAULT_BASE_HEIGHT = 620
+# And how high it can rise above that (same for all desks)
+MOVEMENT_RANGE = 650
+
 config = {
     "mac_address": None,
-    "stand_height": BASE_HEIGHT + 420,
-    "sit_height": BASE_HEIGHT + 63,
+    "base_height": DEFAULT_BASE_HEIGHT,
+    "stand_height": DEFAULT_BASE_HEIGHT + 420,
+    "sit_height": DEFAULT_BASE_HEIGHT + 63,
     "height_tolerance": 2.0,
     "adapter_name": 'hci0',
     "scan_timeout": 5,
@@ -78,10 +79,16 @@ config = {
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('--mac-address', dest='mac_address',
                     type=str, help="Mac address of the Idasen desk")
+parser.add_argument('--base-height', dest='base_height', type=int,
+                    help="The height of tabletop above ground at lowest position (mm)")
 parser.add_argument('--stand-height', dest='stand_height', type=int,
                     help="The height the desk should be at when standing (mm)")
 parser.add_argument('--sit-height', dest='sit_height', type=int,
                     help="The height the desk should be at when sitting (mm)")
+parser.add_argument('--stand-height-offset', dest='stand_height_offset', type=int,
+                    help="The height above base height the desk should be at when standing (mm)")
+parser.add_argument('--sit-height-offset', dest='sit_height_offset', type=int,
+                    help="The height above base height the desk should be at when sitting (mm)")
 parser.add_argument('--height-tolerance', dest='height_tolerance', type=float,
                     help="Distance between reported height and target height before ceasing move commands (mm)")
 parser.add_argument('--adapter', dest='adapter_name', type=str,
@@ -133,6 +140,10 @@ config.update(config_file)
 # Overwrite config from command line args
 config.update(args)
 
+# recompute base and max height
+BASE_HEIGHT = config['base_height']
+MAX_HEIGHT = BASE_HEIGHT + MOVEMENT_RANGE
+
 if not config['mac_address']:
     parser.error("Mac address must be provided")
 
@@ -144,6 +155,16 @@ if config['sit_height'] < BASE_HEIGHT:
 
 if config['stand_height'] > MAX_HEIGHT:
     parser.error("Stand height must be less than {}".format(MAX_HEIGHT))
+
+if 'sit_height_offset' in config:
+    if not (0 <= config['sit_height_offset'] <= MOVEMENT_RANGE):
+        parser.error("Sit height offset must be within [0, {}]".format(MOVEMENT_RANGE))
+    config['sit_height'] = BASE_HEIGHT + config['sit_height_offset']
+
+if 'stand_height_offset' in config:
+    if not (0 <= config['stand_height_offset'] <= MOVEMENT_RANGE):
+        parser.error("Stand height offset must be within [0, {}]".format(MOVEMENT_RANGE))
+    config['stand_height'] = BASE_HEIGHT + config['stand_height_offset']
 
 config['mac_address'] = config['mac_address'].upper()
 config['stand_height_raw'] = mmToRaw(config['stand_height'])
