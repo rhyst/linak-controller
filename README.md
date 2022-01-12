@@ -28,8 +28,11 @@ Configuration can be provided with a file, or via command line arguments. Use `-
 Config options:
 
 - `mac_address` - The MAC address of the desk. This is required.
+- `base_height` - The lowest possible height (mm) of the desk top from the floor. Default `620`.
 - `stand_height` - The standing height (mm) from the floor of the desk Default `1040`.
-- `sit_height` - The standing height (mm) from the floor of the desk. Default `683`.
+- `sit_height` - The sitting height (mm) from the floor of the desk. Default `683`.
+- `stand_height_offset` - The standing height (mm) as an offset from base_height. Overrides `stand_height` if specified.
+- `sit_height_offset` - The sitting height (mm) as an offset from base_height. Overrides `sit_height` if specified.
 - `adapter_name` - The adapter name for the bluetooth adapter to use for the connection (Linux only). Default `hci0`
 - `height_tolerance` - Distance (mm) between reported height and target height before ceasing move commands. Default `2.0`
 - `scan_timeout` - Timeout to scan for the device (seconds). Default `5`
