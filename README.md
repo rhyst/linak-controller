@@ -29,6 +29,7 @@ Config options:
 
 - `mac_address` - The MAC address of the desk. This is required.
 - `base_height` - The lowest possible height (mm) of the desk top from the floor. Default `620`.
+- `movement_range` - How far above base-height the desk can extend (mm). Default `650`.
 - `stand_height` - The standing height (mm) from the floor of the desk Default `1040`.
 - `sit_height` - The sitting height (mm) from the floor of the desk. Default `683`.
 - `stand_height_offset` - The standing height (mm) as an offset from base_height. Overrides `stand_height` if specified.
