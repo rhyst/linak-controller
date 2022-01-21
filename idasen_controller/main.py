@@ -7,7 +7,6 @@ import argparse
 import yaml
 import asyncio
 from bleak import BleakClient, BleakError, BleakScanner
-import pickle
 import json
 import functools
 from appdirs import user_config_dir
@@ -44,7 +43,6 @@ COMMAND_REFERENCE_INPUT_DOWN = bytearray(struct.pack("<H", 32767))
 # OTHER DEFINITIONS
 DEFAULT_CONFIG_DIR = user_config_dir('idasen-controller')
 DEFAULT_CONFIG_PATH = os.path.join(DEFAULT_CONFIG_DIR, 'config.yaml')
-PICKLE_FILE = os.path.join(DEFAULT_CONFIG_DIR, 'desk.pickle')
 
 # CONFIGURATION SETUP
 
@@ -279,24 +277,6 @@ async def move_to(client, target):
             await unsubscribe(client, UUID_HEIGHT)
 
 
-def unpickle_desk():
-    """Load a Bleak device config from a pickle file and check that it is the correct device"""
-    try:
-        if IS_LINUX:
-            with open(PICKLE_FILE,'rb') as f:
-                desk = pickle.load(f)
-                if desk.address == config['mac_address']:
-                    return desk
-    except Exception:
-        pass
-    return None
-
-def pickle_desk(desk):
-    """Attempt to pickle the desk"""
-    if IS_LINUX:
-        with open(PICKLE_FILE, 'wb') as f: 
-            pickle.dump(desk, f)
-
 async def scan(mac_address = None):
     """Scan for a bluetooth device with the configured address and return it or return all devices if no address specified"""
     print('Scanning\r', end ="")
@@ -316,38 +296,17 @@ async def scan(mac_address = None):
 
 async def connect(client = None, attempt = 0):
     """Attempt to connect to the desk"""
-    # Attempt to load and connect to the pickled desk
-    desk = unpickle_desk()
-    if desk:
-        pickled = True
-    if not desk:
-        # If that fails then rescan for the desk
-        desk = await scan(config['mac_address'])
-    if not desk:
-        print('Could not find desk {}'.format(config['mac_address']))
-        os._exit(1)
-    # Cache the Bleak device config to connect more quickly in future
-    pickle_desk(desk)
     try:
         print('Connecting\r', end ="")
         if not client:
-            client = BleakClient(desk, device=config['adapter_name'])
+            client = BleakClient(config['mac_address'], device=config['adapter_name'])
         await client.connect(timeout=config['connection_timeout'])
         print("Connected {}".format(config['mac_address']))
         return client 
     except BleakError as e:
-        if attempt == 0 and pickled:
-            # Could be a bad pickle so remove it and try again
-            try:
-                os.remove(PICKLE_FILE)
-                print('Connecting failed - Retrying without cached connection')
-            except OSError:
-                pass
-            return await connect(attempt = attempt + 1)
-        else:
-            print('Connecting failed')
-            print(e)
-            os._exit(1)
+        print('Connecting failed')
+        print(e)
+        os._exit(1)
 
 async def disconnect(client):
     """Attempt to disconnect cleanly"""
