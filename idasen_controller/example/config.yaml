@@ -6,5 +6,5 @@ scan_timeout: 5
 connection_timeout: 10
 movement_timeout: 30
 adapter_name: hci0
-server_address": "127.0.0.1"
+server_address: "127.0.0.1"
 server_port: 9123
