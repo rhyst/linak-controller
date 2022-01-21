@@ -56,11 +56,12 @@ if not os.path.isfile(DEFAULT_CONFIG_PATH):
 # Height of the desk at it's lowest (in mm)
 DEFAULT_BASE_HEIGHT = 620
 # And how high it can rise above that (same for all desks)
-MOVEMENT_RANGE = 650
+DEFAULT_MOVEMENT_RANGE = 650
 
 config = {
     "mac_address": None,
     "base_height": DEFAULT_BASE_HEIGHT,
+    "movement_range": DEFAULT_MOVEMENT_RANGE,
     "stand_height": DEFAULT_BASE_HEIGHT + 420,
     "sit_height": DEFAULT_BASE_HEIGHT + 63,
     "height_tolerance": 2.0,
@@ -81,6 +82,8 @@ parser.add_argument('--mac-address', dest='mac_address',
                     type=str, help="Mac address of the Idasen desk")
 parser.add_argument('--base-height', dest='base_height', type=int,
                     help="The height of tabletop above ground at lowest position (mm)")
+parser.add_argument('--movement-range', dest='movement_range', type=int,
+                    help="How far above base-height the desk can extend (mm)")
 parser.add_argument('--stand-height', dest='stand_height', type=int,
                     help="The height the desk should be at when standing (mm)")
 parser.add_argument('--sit-height', dest='sit_height', type=int,
@@ -142,7 +145,7 @@ config.update(args)
 
 # recompute base and max height
 BASE_HEIGHT = config['base_height']
-MAX_HEIGHT = BASE_HEIGHT + MOVEMENT_RANGE
+MAX_HEIGHT = BASE_HEIGHT + config['movement_range']
 
 if not config['mac_address']:
     parser.error("Mac address must be provided")
@@ -157,13 +160,13 @@ if config['stand_height'] > MAX_HEIGHT:
     parser.error("Stand height must be less than {}".format(MAX_HEIGHT))
 
 if 'sit_height_offset' in config:
-    if not (0 <= config['sit_height_offset'] <= MOVEMENT_RANGE):
-        parser.error("Sit height offset must be within [0, {}]".format(MOVEMENT_RANGE))
+    if not (0 <= config['sit_height_offset'] <= config['movement_range']):
+        parser.error("Sit height offset must be within [0, {}]".format(config['movement_range']))
     config['sit_height'] = BASE_HEIGHT + config['sit_height_offset']
 
 if 'stand_height_offset' in config:
-    if not (0 <= config['stand_height_offset'] <= MOVEMENT_RANGE):
-        parser.error("Stand height offset must be within [0, {}]".format(MOVEMENT_RANGE))
+    if not (0 <= config['stand_height_offset'] <= config['movement_range']):
+        parser.error("Stand height offset must be within [0, {}]".format(config['movement_range']))
     config['stand_height'] = BASE_HEIGHT + config['stand_height_offset']
 
 config['mac_address'] = config['mac_address'].upper()
