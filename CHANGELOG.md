@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.8] - 2022-01-07
+
+### Added
+- Add options allowing configuring base height and movement range (via PR from subraizada3)
+
+
+### Changed
+- Remove redundant scanning code when connecting which should improve time to connection
+- Remove pickling code as that was an attempt to speed up the redundant scanning process
+
+### Fixed
+- More compatible shebang (via PR from subraizada3)
+ 
+
 ## [1.0.7] - 2022-01-07
 
 ### Changed
