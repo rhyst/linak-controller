@@ -277,22 +277,14 @@ async def move_to(client, target):
             await unsubscribe(client, UUID_HEIGHT)
 
 
-async def scan(mac_address = None):
+async def scan():
     """Scan for a bluetooth device with the configured address and return it or return all devices if no address specified"""
     print('Scanning\r', end ="")
-    if not mac_address:
-        devices = await BleakScanner().discover(device=config['adapter_name'], timeout=config['scan_timeout'])
-        print('Found {} devices using {}'.format(len(devices), config['adapter_name']))
-        for device in devices:
-            print(device)
-        return devices
-    else:
-        device = await BleakScanner.find_device_by_address(mac_address)
-        if device:
-            print('Scanning - Desk Found')
-            return device
-    print('Scanning - Desk {} Not Found'.format(mac_address))
-    return None
+    devices = await BleakScanner().discover(device=config['adapter_name'], timeout=config['scan_timeout'])
+    print('Found {} devices using {}'.format(len(devices), config['adapter_name']))
+    for device in devices:
+        print(device)
+    return devices
 
 async def connect(client = None, attempt = 0):
     """Attempt to connect to the desk"""
