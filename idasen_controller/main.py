@@ -327,6 +327,10 @@ async def run_command(client, config):
         await move_to(client, target)
     elif config['move_to']:
         # Move to custom height
+        target = mmToRaw(config['move_to'])
+        await move_to(client, target)
+    elif config['move_to_raw']:
+        # Move to custom raw height
         target = config['move_to_raw']
         await move_to(client, target)
     if target:
