@@ -71,6 +71,7 @@ config = {
     "stand": False,
     "monitor": False,
     "move_to": None,
+    "move_to_raw": None,
     "server_address": "127.0.0.1",
     "server_port": 9123
 }
