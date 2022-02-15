@@ -69,6 +69,7 @@ config = {
     "movement_timeout": 30,
     "sit": False,
     "stand": False,
+    "get_height": False,
     "monitor": False,
     "move_to": None,
     "move_to_raw": None,
@@ -114,6 +115,8 @@ cmd.add_argument('--sit', dest='sit', action='store_true',
                  help="Move the desk to sitting height")
 cmd.add_argument('--stand', dest='stand', action='store_true',
                  help="Move the desk to standing height")
+cmd.add_argument('--get-height', dest='get_height', action='store_true',
+                 help="Get current desk height (mm)")
 cmd.add_argument('--monitor', dest='monitor', action='store_true',
                  help="Monitor desk height and speed")
 cmd.add_argument('--move-to',dest='move_to', type=int,
@@ -364,7 +367,7 @@ async def run_forwarded_command(client, config, reader, writer):
 
 async def forward_command(config):
     """Send commands to the tcp server"""
-    allowed_keys = ["sit", "stand", "move_to", "move_to_raw"]
+    allowed_keys = ["sit", "stand", "move_to", "move_to_raw", "get_height"]
     forwarded_config = { key: config[key] for key in allowed_keys if key in config }
     reader, writer = await asyncio.open_connection(config['server_address'], config['server_port'])
     writer.write(json.dumps(forwarded_config).encode())
