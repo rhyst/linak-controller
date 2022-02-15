@@ -341,6 +341,9 @@ async def run_command(client, config):
         print("Final height: {:4.0f}mm (Target: {:4.0f}mm)".format(rawToMM(final_height), rawToMM(target)))
 
 async def run_server(client, config):
+     # Always print current height
+    initial_height, speed = struct.unpack("<Hh", await client.read_gatt_char(UUID_HEIGHT))
+    print("Height: {:4.0f}mm".format(rawToMM(initial_height)))
     """Start a tcp server to listen for commands"""
     def disconnect_callback(client, _ = None):
         print("Lost connection with {}".format(client.address))
