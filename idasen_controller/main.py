@@ -76,7 +76,6 @@ config = {
     "movement_timeout": 30,
     "sit": False,
     "stand": False,
-    "get_height": False,
     "monitor": False,
     "move_to": None,
     "move_to_raw": None,
@@ -498,7 +497,7 @@ async def run_forwarded_command(client, config, reader, writer):
 async def forward_command(config):
     """Send commands to the tcp server"""
 
-    allowed_keys = ["sit", "stand", "move_to", "move_to_raw", "get_height"]
+    allowed_keys = ["sit", "stand", "move_to", "move_to_raw", ""]
     forwarded_config = {key: config[key] for key in allowed_keys if key in config}
     reader, writer = await asyncio.open_connection(
         config["server_address"], config["server_port"]
