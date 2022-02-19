@@ -295,10 +295,13 @@ async def move_down(client):
 async def stop(client):
     # This emulates the behaviour of the app. Stop commands are sent to both
     # Reference Input and Command characteristics.
-    await client.write_gatt_char(UUID_COMMAND, COMMAND_STOP)
-    if IS_LINUX:
-        # It doesn't like this on windows
+    try:
+        await client.write_gatt_char(UUID_COMMAND, COMMAND_STOP)
         await client.write_gatt_char(UUID_REFERENCE_INPUT, COMMAND_REFERENCE_INPUT_STOP)
+    except BleakError as e:
+        # This seems to result in a an error on Raspberry Pis but it does not affect movement
+        # bleak.exc.BleakDBusError: [org.bluez.Error.NotPermitted] Write acquired
+        pass
 
 
 async def subscribe(client, uuid, callback):
