@@ -39,10 +39,7 @@ UUID_REFERENCE_INPUT = "99fa0031-338a-1024-8a49-009c0215f78a"
 COMMAND_UP = bytearray(struct.pack("<H", 71))
 COMMAND_DOWN = bytearray(struct.pack("<H", 70))
 COMMAND_STOP = bytearray(struct.pack("<H", 255))
-
 COMMAND_REFERENCE_INPUT_STOP = bytearray(struct.pack("<H", 32769))
-COMMAND_REFERENCE_INPUT_UP = bytearray(struct.pack("<H", 32768))
-COMMAND_REFERENCE_INPUT_DOWN = bytearray(struct.pack("<H", 32767))
 
 # OTHER DEFINITIONS
 DEFAULT_CONFIG_DIR = user_config_dir("idasen-controller")
@@ -353,7 +350,7 @@ async def move_to(client, target):
             asyncio.create_task(unsubscribe(client, UUID_HEIGHT))
             try:
                 move_done.set_result(True)
-            except asyncio.exceptions.InvalidStateError:
+            except asyncio.InvalidStateError:
                 # This happens on windows, I dont know why
                 pass
         # Or resend the movement command if we have not yet reached the
