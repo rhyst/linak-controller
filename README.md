@@ -38,19 +38,23 @@ Configuration can be provided with a file, or via command line arguments. Use `-
 
 Config options:
 
-- `mac_address` - The MAC address of the desk. This is required.
-- `base_height` - The lowest possible height (mm) of the desk top from the floor. Default `620`.
-- `movement_range` - How far above base-height the desk can extend (mm). Default `650`.
-- `stand_height` - The standing height (mm) from the floor of the desk Default `1040`.
-- `sit_height` - The sitting height (mm) from the floor of the desk. Default `683`.
-- `stand_height_offset` - The standing height (mm) as an offset from base_height. Overrides `stand_height` if specified.
-- `sit_height_offset` - The sitting height (mm) as an offset from base_height. Overrides `sit_height` if specified.
-- `adapter_name` - The adapter name for the bluetooth adapter to use for the connection (Linux only). Default `hci0`
-- `scan_timeout` - Timeout to scan for the device (seconds). Default `5`
-- `connection_timeout` - Timeout to obtain connection (seconds). Default `10`
-- `movement_timeout` - Timeout for waiting for the desk to reach the specified height (seconds). Default `30`
-- `server_address` - The address the server should run at (if running server). Default `127.0.0.1`
-- `server_port` - The port the server should run on (if running server). Default `9123`
+| Option                | Description                                                                                    | Default     |
+| --------------------- | ---------------------------------------------------------------------------------------------- | ----------- |
+| `mac_address`         | The MAC address of the desk. This is required.                                                 |             |
+| `base_height`         | The lowest possible height (mm) of the desk top from the floor.                                | `620`.      |
+| `movement_range`      | How far above base height the desk can extend (mm).                                            | `650`.      |
+| `stand_height`        | The standing height (mm) from the floor of the desk                                            | `1040`      |
+| `sit_height`          | The sitting height (mm) from the floor of the desk.                                            | `683`.      |
+| `stand_height_offset` | The standing height (mm) as an offset from base_height. Overrides `stand_height` if specified. |             |
+| `sit_height_offset`   | The sitting height (mm) as an offset from base_height. Overrides `sit_height` if specified.    |             |
+| `adapter_name`        | The adapter name for the bluetooth adapter to use for the connection (Linux only).             | `hci0`      |
+| `scan_timeout`        | Timeout to scan for the device (seconds).                                                      | `5`         |
+| `connection_timeout`  | Timeout to obtain connection (seconds).                                                        | `10`        |
+| `movement_timeout`    | Timeout for waiting for the desk to reach the specified height (seconds).                      | `30`        |
+| `server_address`      | The address the server should run at (if running server).                                      | `127.0.0.1` |
+| `server_port`         | The port the server should run on (if running server).                                         | `9123`      |
+
+All of these options can be set on the command line, just replace any `_` with `-` e.g. `mac_address` becomes `--mac-address`.
 
 #### Device MAC addresses
 
@@ -60,60 +64,32 @@ Config options:
 
 ## Usage
 
-### Command Line
+### Commands
 
-To print the current desk height:
+The script accepts a number of commands:
 
-```
-idasen-controller
-```
+| Command                      | Description                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------------------- |
+|                              | Running without any command will print the current desk height                                    |
+| `--monitor`                  | Monitor for changes to height (and speed)                                                         |
+| `--stand`                    | Move the desk to the standing height specified in config                                          |
+| `--sit`                      | Move the desk to the sitting height specified in config                                           |
+| `--move-to <value>`          | Move the desk to a certain height (mm) above the floor                                            |
+| `--scan`                     | List available bluetooth devices (using the configured `adapter_name`)                            |
+| `--server`                   | Run the script as a server, which will maintain the connection and provide quicker response times |
+| `--forward <other commands>` | Send commands to a server                                                                         |
+| `--config <path>`            | Specify a path to a config file                                                                   |
 
-To monitor for changes to height (and speed):
-
-```
-idasen-controller --monitor
-```
-
-Assuming the config file is populated to move the desk to standing position:
-
-```
-idasen-controller --stand
-```
-
-Assuming the config file is populated to move the desk to sitting position:
-
-```
-idasen-controller --sit
-```
-
-Move the desk to a certain height (mm) above the floor:
+For example to move to a particular height you can run:
 
 ```
 idasen-controller --move-to 800
 ```
 
-Listing available bluetooth devices (using the configured `adapter_name`):
+Or to move to a sitting position via a server you can run:
 
 ```
-idasen-controller --scan
-```
-
-To run the script as a server, which will maintain the connection and provide quicker response times:
-
-```
-idasen-controller --server
-```
-
-And to send commands to the server add the forward argument:
-
-```
-idasen-controller --forward --stand
-```
-
-To specify a path to a config file:
-
-```
-idasen-controller --config <path>
+idasen-controller --forward --sit
 ```
 
 ## Troubleshooting
@@ -147,11 +123,15 @@ There is a page with a few examples of different ways to use the script: [RECIPE
 To run the script without installing via pip first install the requirements:
 
 ```
+
 pip3 install -r requirements.txt
+
 ```
 
 Then you can run all the same commands with:
 
 ```
+
 python3 idasen_controller/main.py <command>
+
 ```
