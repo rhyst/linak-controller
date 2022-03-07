@@ -2,26 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- Client/server mode now prints heights on the client as well as the server
+
+### Changed
+
+- Updated to use the REFERENCE_INPUT characteristic which allows you to specify a height to move to. Makes the movement accurate to the millimetre and greatly simplifies code. Inspired by this project: https://github.com/pfilipp/idasen-controller
+
 ## [1.0.8] - 2022-01-07
 
 ### Added
+
 - Add options allowing configuring base height and movement range (via PR from subraizada3)
 
-
 ### Changed
+
 - Remove redundant scanning code when connecting which should improve time to connection
 - Remove pickling code as that was an attempt to speed up the redundant scanning process
 
 ### Fixed
+
 - More compatible shebang (via PR from subraizada3)
- 
 
 ## [1.0.7] - 2022-01-07
 
 ### Changed
 
 - Remove unneeded depenedencies which will hopefully make windows installs a bit smoother.
-
 
 ## [1.0.6] - 2021-03-30
 

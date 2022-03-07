@@ -6,14 +6,14 @@ import struct
 import argparse
 import yaml
 import asyncio
+import aiohttp
+from aiohttp import web
 from bleak import BleakClient, BleakError, BleakScanner
 import json
-import functools
+from functools import partial
 from appdirs import user_config_dir
 
-IS_LINUX = sys.platform == "linux" or sys.platform == "linux2"
 IS_WINDOWS = sys.platform == "win32"
-IS_MAC = sys.platform == "darwin"
 
 # HELPER FUNCTIONS
 
@@ -36,10 +36,8 @@ UUID_HEIGHT = "99fa0021-338a-1024-8a49-009c0215f78a"
 UUID_COMMAND = "99fa0002-338a-1024-8a49-009c0215f78a"
 UUID_REFERENCE_INPUT = "99fa0031-338a-1024-8a49-009c0215f78a"
 
-COMMAND_UP = bytearray(struct.pack("<H", 71))
-COMMAND_DOWN = bytearray(struct.pack("<H", 70))
 COMMAND_STOP = bytearray(struct.pack("<H", 255))
-COMMAND_REFERENCE_INPUT_STOP = bytearray(struct.pack("<H", 32769))
+COMMAND_WAKEUP = bytearray(struct.pack("<H", 254))
 
 # OTHER DEFINITIONS
 DEFAULT_CONFIG_DIR = user_config_dir("idasen-controller")
@@ -66,7 +64,6 @@ config = {
     "movement_range": DEFAULT_MOVEMENT_RANGE,
     "stand_height": DEFAULT_BASE_HEIGHT + 420,
     "sit_height": DEFAULT_BASE_HEIGHT + 63,
-    "height_tolerance": 2.0,
     "adapter_name": "hci0",
     "scan_timeout": 5,
     "connection_timeout": 10,
@@ -119,12 +116,6 @@ parser.add_argument(
     dest="sit_height_offset",
     type=int,
     help="The height above base height the desk should be at when sitting (mm)",
-)
-parser.add_argument(
-    "--height-tolerance",
-    dest="height_tolerance",
-    type=float,
-    help="Distance between reported height and target height before ceasing move commands (mm)",
 )
 parser.add_argument(
     "--adapter", dest="adapter_name", type=str, help="The bluetooth adapter device name"
@@ -258,7 +249,6 @@ if "stand_height_offset" in config:
 config["mac_address"] = config["mac_address"].upper()
 config["stand_height_raw"] = mmToRaw(config["stand_height"])
 config["sit_height_raw"] = mmToRaw(config["sit_height"])
-config["height_tolerance_raw"] = 10 * config["height_tolerance"]
 if config["move_to"]:
     config["move_to_raw"] = mmToRaw(config["move_to"])
 
@@ -269,7 +259,11 @@ if IS_WINDOWS:
 # MAIN PROGRAM
 
 
-def print_height_data(sender, data):
+async def get_height_speed(client):
+    return struct.unpack("<Hh", await client.read_gatt_char(UUID_HEIGHT))
+
+
+def get_height_data_from_notification(sender, data, log=print):
     height, speed = struct.unpack("<Hh", data)
     print(
         "Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(
@@ -278,26 +272,18 @@ def print_height_data(sender, data):
     )
 
 
-def has_reached_target(height, target):
-    # The notified height values seem a bit behind so try to stop before
-    # reaching the target value to prevent overshooting
-    return abs(height - target) <= config["height_tolerance_raw"]
+async def wakeUp(client):
+    await client.write_gatt_char(UUID_COMMAND, COMMAND_WAKEUP)
 
 
-async def move_up(client):
-    await client.write_gatt_char(UUID_COMMAND, COMMAND_UP)
-
-
-async def move_down(client):
-    await client.write_gatt_char(UUID_COMMAND, COMMAND_DOWN)
+async def move_to_target(client, target):
+    encoded_target = bytearray(struct.pack("<H", int(target)))
+    await client.write_gatt_char(UUID_REFERENCE_INPUT, encoded_target)
 
 
 async def stop(client):
-    # This emulates the behaviour of the app. Stop commands are sent to both
-    # Reference Input and Command characteristics.
     try:
         await client.write_gatt_char(UUID_COMMAND, COMMAND_STOP)
-        await client.write_gatt_char(UUID_REFERENCE_INPUT, COMMAND_REFERENCE_INPUT_STOP)
     except BleakError as e:
         # This seems to result in a an error on Raspberry Pis but it does not affect movement
         # bleak.exc.BleakDBusError: [org.bluez.Error.NotPermitted] Write acquired
@@ -310,6 +296,7 @@ async def subscribe(client, uuid, callback):
 
 
 async def unsubscribe(client, uuid):
+    """Stop listenening for notifications on a characteristic"""
     try:
         await client.stop_notify(uuid)
     except KeyError:
@@ -317,73 +304,32 @@ async def unsubscribe(client, uuid):
         pass
 
 
-async def move_to(client, target):
+async def move_to(client, target, log=print):
     """Move the desk to a specified height"""
 
     initial_height, speed = struct.unpack(
         "<Hh", await client.read_gatt_char(UUID_HEIGHT)
     )
 
-    # Initialise by setting the movement direction
-    direction = "UP" if target > initial_height else "DOWN"
+    if initial_height == target:
+        return
 
-    # Set up callback to run when the desk height changes. It will resend
-    # movement commands until the desk has reached the target height.
-    loop = asyncio.get_event_loop()
-    move_done = loop.create_future()
-    global count
-    count = 0
+    await wakeUp(client)
+    await stop(client)
 
-    def _move_to(sender, data):
-        global count
-        height, speed = struct.unpack("<Hh", data)
-        count = count + 1
-        print(
-            "Height: {:4.0f}mm Target: {:4.0f}mm Speed: {:2.0f}mm/s".format(
-                rawToMM(height), rawToMM(target), rawToSpeed(speed)
+    while True:
+        await move_to_target(client, target)
+        await asyncio.sleep(0.5)
+        height, speed = await get_height_speed(client)
+        log(
+            "Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(
+                rawToMM(height), rawToSpeed(speed)
             )
         )
+        if speed == 0:
+            break
 
-        # Stop if we have reached the target OR
-        # If you touch desk control while the script is running then movement
-        # callbacks stop. The final call will have speed 0 so detect that
-        # and stop.
-        if speed == 0 or has_reached_target(height, target):
-            asyncio.create_task(stop(client))
-            asyncio.create_task(unsubscribe(client, UUID_HEIGHT))
-            try:
-                move_done.set_result(True)
-            except asyncio.InvalidStateError:
-                # This happens on windows, I dont know why
-                pass
-        # Or resend the movement command if we have not yet reached the
-        # target.
-        # Each movement command seems to run the desk motors for about 1
-        # second if uninterrupted and the height value is updated about 16
-        # times.
-        # Resending the command on the 6th update seems a good balance
-        # between helping to avoid overshoots and preventing stutterinhg
-        # (the motor seems to slow if no new move command has been sent)
-        elif direction == "UP" and count == 6:
-            asyncio.create_task(move_up(client))
-            count = 0
-        elif direction == "DOWN" and count == 6:
-            asyncio.create_task(move_down(client))
-            count = 0
-
-    # Listen for changes to desk height and send first move command (if we are
-    # not already at the target height).
-    if not has_reached_target(initial_height, target):
-        await subscribe(client, UUID_HEIGHT, _move_to)
-        if direction == "UP":
-            asyncio.create_task(move_up(client))
-        elif direction == "DOWN":
-            asyncio.create_task(move_down(client))
-        try:
-            await asyncio.wait_for(move_done, timeout=config["movement_timeout"])
-        except asyncio.TimeoutError as e:
-            print("Timed out while waiting for desk")
-            await unsubscribe(client, UUID_HEIGHT)
+    await unsubscribe(client, UUID_HEIGHT)
 
 
 async def scan():
@@ -419,43 +365,43 @@ async def disconnect(client):
         await client.disconnect()
 
 
-async def run_command(client, config):
+async def run_command(client, config, log=print):
     """Begin the action specified by command line arguments and config"""
     # Always print current height
     initial_height, speed = struct.unpack(
         "<Hh", await client.read_gatt_char(UUID_HEIGHT)
     )
-    print("Height: {:4.0f}mm".format(rawToMM(initial_height)))
+    log("Height: {:4.0f}mm".format(rawToMM(initial_height)))
     target = None
     if config["monitor"]:
         # Print changes to height data
-        await subscribe(client, UUID_HEIGHT, print_height_data)
-        loop = asyncio.get_event_loop()
-        wait = loop.create_future()
+        await subscribe(
+            client, UUID_HEIGHT, partial(get_height_data_from_notification, log=log)
+        )
+        wait = asyncio.get_event_loop().create_future()
         await wait
     elif config["sit"]:
         # Move to configured sit height
         target = config["sit_height_raw"]
-        await move_to(client, target)
+        await move_to(client, target, log=log)
     elif config["stand"]:
         # Move to configured stand height
         target = config["stand_height_raw"]
-        await move_to(client, target)
+        await move_to(client, target, log=log)
     elif config["move_to"]:
         # Move to custom height
         target = mmToRaw(config["move_to"])
-        await move_to(client, target)
+        await move_to(client, target, log=log)
     elif config["move_to_raw"]:
         # Move to custom raw height
         target = config["move_to_raw"]
-        await move_to(client, target)
+        await move_to(client, target, log=log)
     if target:
-        # If we were moving to a target height, wait, then print the actual final height
-        await asyncio.sleep(1)
         final_height, speed = struct.unpack(
             "<Hh", await client.read_gatt_char(UUID_HEIGHT)
         )
-        print(
+        # If we were moving to a target height, wait, then print the actual final height
+        log(
             "Final height: {:4.0f}mm (Target: {:4.0f}mm)".format(
                 rawToMM(final_height), rawToMM(target)
             )
@@ -463,41 +409,62 @@ async def run_command(client, config):
 
 
 async def run_server(client, config):
-    """Start a tcp server to listen for commands"""
+    """Start a server to listen for commands via websocket connection"""
 
     def disconnect_callback(client, _=None):
         print("Lost connection with {}".format(client.address))
         asyncio.create_task(connect(client))
 
     client.set_disconnected_callback(disconnect_callback)
-    server = await asyncio.start_server(
-        functools.partial(run_forwarded_command, client, config),
-        config["server_address"],
-        config["server_port"],
-    )
-    print("Server listening")
-    await server.serve_forever()
+
+    app = web.Application()
+    app.router.add_get("/", partial(run_forwarded_command, client, config))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, config["server_address"], config["server_port"])
+    await site.start()
+    while True:
+        await asyncio.sleep(1000)
 
 
-async def run_forwarded_command(client, config, reader, writer):
-    """Run commands received by the tcp server"""
+async def run_forwarded_command(client, config, request):
+    """Run commands received by the server"""
     print("Received command")
-    request = (await reader.read()).decode("utf8")
-    forwarded_config = json.loads(str(request))
-    merged_config = {**config, **forwarded_config}
-    await run_command(client, merged_config)
-    writer.close()
+    ws = web.WebSocketResponse()
+
+    def log(message, end="\n"):
+        print(message, end=end)
+        asyncio.create_task(ws.send_str(str(message)))
+
+    await ws.prepare(request)
+    async for msg in ws:
+        if msg.type == aiohttp.WSMsgType.TEXT:
+            forwarded_config = json.loads(msg.data)
+            merged_config = {**config, **forwarded_config}
+            await run_command(client, merged_config, log)
+        break
+    await asyncio.sleep(1)  # Allows final messages to send on web socket
+    await ws.close()
+    return ws
 
 
 async def forward_command(config):
-    """Send commands to the tcp server"""
+    """Send commands to a server instance of this script"""
     allowed_keys = ["sit", "stand", "move_to", "move_to_raw"]
     forwarded_config = {key: config[key] for key in allowed_keys if key in config}
-    reader, writer = await asyncio.open_connection(
-        config["server_address"], config["server_port"]
+    session = aiohttp.ClientSession()
+    ws = await session.ws_connect(
+        f'http://{config["server_address"]}:{config["server_port"]}'
     )
-    writer.write(json.dumps(forwarded_config).encode())
-    writer.close()
+    await ws.send_str(json.dumps(forwarded_config))
+    while True:
+        msg = await ws.receive()
+        if msg.type == aiohttp.WSMsgType.text:
+            print(msg.data)
+        elif msg.type in [aiohttp.WSMsgType.closed, aiohttp.WSMsgType.error]:
+            break
+    await ws.close()
+    await session.close()
 
 
 async def main():
@@ -515,10 +482,10 @@ async def main():
             if config["server"]:
                 await run_server(client, config)
             else:
-                await run_command(client, config)
-    except Exception as e:
-        print("\nSomething unexpected went wrong:")
-        print(e)
+                await run_command(client, config, print)
+    # except Exception as e:
+    #     print("\nSomething unexpected went wrong:")
+    #     print(e)
     finally:
         if client:
             print("\rDisconnecting\r", end="")

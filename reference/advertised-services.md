@@ -1,3 +1,6 @@
+Raw advertised services:
+
+```
 [NEW] Primary Service (Handle 0x72a1)
 	/org/bluez/hci0/dev_E8_5B_5B_24_22_E4/service000a
 	00001801-0000-1000-8000-00805f9b34fb
@@ -8,7 +11,7 @@
 		Service Changed
 		[NEW] Descriptor (Handle 0x98e4) CLIENT_CHARACTERISTIC_CONFIG_UUID / NOTIFCATION ?
 			/org/bluez/hci0/dev_E8_5B_5B_24_22_E4/service000a/char000b/desc000d
-			00002902-0000-1000-8000-00805f9b34fb 
+			00002902-0000-1000-8000-00805f9b34fb
 			Client Characteristic Configuration
 [NEW] Primary Service (Handle 0x72a1) CONTROL
 	/org/bluez/hci0/dev_E8_5B_5B_24_22_E4/service000e
@@ -66,8 +69,11 @@
 		/org/bluez/hci0/dev_E8_5B_5B_24_22_E4/service0020/char0021
 		99fa0031-338a-1024-8a49-009c0215f78a
 		Vendor specific
+```
 
+My guess at what these are:
 
+```
 00002a05-0000-1000-8000-00805f9b34fb INDICATE? 0x20
 99fa0002-338a-1024-8a49-009c0215f78a COMMAND 0x0c
 99fa0003-338a-1024-8a49-009c0215f78a ERROR 0x12
@@ -76,27 +82,27 @@
 99fa0029-338a-1024-8a49-009c0215f78a MASK 0x02
 99fa002a-338a-1024-8a49-009c0215f78a DETECT_MASK 0x02
 99fa0030-338a-1024-8a49-009c0215f78a ONE (REFERENCE_INPUT) 0x0c
+```
 
-Writing to command takes little endian unsigned shorts
+Writing to the characteristices:
+
+Writing to command takes little endian unsigned shorts  
 Writing to Reference Input takes little endian signed shorts
 
-
-import java.math.BigInteger; 
-
-
-Stupid code to convert the byte array declarations in the decompiled app to numbers
-
+```
+import java.math.BigInteger;
+// Code to convert the byte array declarations in the decompiled app to numbers
 public class HelloWorld{
 
      /* Try this: */
-    public static short byteArrayToShortLE(final byte[] b, final int offset) 
+    public static short byteArrayToShortLE(final byte[] b, final int offset)
     {
             short value = 0;
-            for (int i = 0; i < 2; i++) 
+            for (int i = 0; i < 2; i++)
             {
                 value |= (b[i + offset] & 0x000000FF) << (i * 8);
-            }            
-    
+            }
+
             return value;
      }
 
@@ -106,8 +112,11 @@ public class HelloWorld{
         System.out.println(byteArrayToShortLE(b, 0));
      }
 }
-
+```
 
 Convert characteristic value:
-# raw = characteristic.read_value()
-# print("Inital height: {}".format(int.from_bytes(bytes([int(raw[0])]) + bytes([int(raw[1])]), 'little')))
+
+```
+raw = characteristic.read_value()
+print("Inital height: {}".format(int.from_bytes(bytes([int(raw[0])]) + bytes([int(raw[1])]), 'little')))
+```
