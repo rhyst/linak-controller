@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [1.1.0rc1] - 2022-03-08
 
 ### Added
 
