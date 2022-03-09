@@ -38,21 +38,18 @@ Configuration can be provided with a file, or via command line arguments. Use `-
 
 Config options:
 
-| Option                | Description                                                                                    | Default     |
-| --------------------- | ---------------------------------------------------------------------------------------------- | ----------- |
-| `mac_address`         | The MAC address of the desk. This is required.                                                 |             |
-| `base_height`         | The lowest possible height (mm) of the desk top from the floor.                                | `620`.      |
-| `movement_range`      | How far above base height the desk can extend (mm).                                            | `650`.      |
-| `stand_height`        | The standing height (mm) from the floor of the desk                                            | `1040`      |
-| `sit_height`          | The sitting height (mm) from the floor of the desk.                                            | `683`.      |
-| `stand_height_offset` | The standing height (mm) as an offset from base_height. Overrides `stand_height` if specified. |             |
-| `sit_height_offset`   | The sitting height (mm) as an offset from base_height. Overrides `sit_height` if specified.    |             |
-| `adapter_name`        | The adapter name for the bluetooth adapter to use for the connection (Linux only).             | `hci0`      |
-| `scan_timeout`        | Timeout to scan for the device (seconds).                                                      | `5`         |
-| `connection_timeout`  | Timeout to obtain connection (seconds).                                                        | `10`        |
-| `movement_timeout`    | Timeout for waiting for the desk to reach the specified height (seconds).                      | `30`        |
-| `server_address`      | The address the server should run at (if running server).                                      | `127.0.0.1` |
-| `server_port`         | The port the server should run on (if running server).                                         | `9123`      |
+| Option               | Description                                                                        | Default     |
+| -------------------- | ---------------------------------------------------------------------------------- | ----------- |
+| `mac_address`        | The MAC address of the desk. This is required.                                     |             |
+| `base_height`        | The lowest possible height (mm) of the desk top from the floor.                    | `620`.      |
+| `movement_range`     | How far above base height the desk can extend (mm).                                | `650`.      |
+| `adapter_name`       | The adapter name for the bluetooth adapter to use for the connection (Linux only). | `hci0`      |
+| `scan_timeout`       | Timeout to scan for the device (seconds).                                          | `5`         |
+| `connection_timeout` | Timeout to obtain connection (seconds).                                            | `10`        |
+| `movement_timeout`   | Timeout for waiting for the desk to reach the specified height (seconds).          | `30`        |
+| `server_address`     | The address the server should run at (if running server).                          | `127.0.0.1` |
+| `server_port`        | The port the server should run on (if running server).                             | `9123`      |
+| `favourites`         | Favourite heights object where the key is the name and the value is the height     | ``          |
 
 All of these options can be set on the command line, just replace any `_` with `-` e.g. `mac_address` becomes `--mac-address`.
 
@@ -64,33 +61,78 @@ All of these options can be set on the command line, just replace any `_` with `
 
 ## Usage
 
-### Commands
-
 The script accepts a number of commands:
 
 | Command                      | Description                                                                                       |
 | ---------------------------- | ------------------------------------------------------------------------------------------------- |
 |                              | Running without any command will print the current desk height                                    |
-| `--monitor`                  | Monitor for changes to height (and speed)                                                         |
-| `--stand`                    | Move the desk to the standing height specified in config                                          |
-| `--sit`                      | Move the desk to the sitting height specified in config                                           |
+| `--watch`                    | Watch desk and print changes to height (and speed)                                                |
 | `--move-to <value>`          | Move the desk to a certain height (mm) above the floor                                            |
 | `--scan`                     | List available bluetooth devices (using the configured `adapter_name`)                            |
 | `--server`                   | Run the script as a server, which will maintain the connection and provide quicker response times |
+| `--tcp-server`               | Run the script as a simpler tcp only server                                                       |
 | `--forward <other commands>` | Send commands to a server                                                                         |
 | `--config <path>`            | Specify a path to a config file                                                                   |
 
-For example to move to a particular height you can run:
+### Moving the desk
+
+To move to a particular height you can run:
 
 ```
 idasen-controller --move-to 800
 ```
 
-Or to move to a sitting position via a server you can run:
+If you have configured favourite values in the `config.yaml` like this:
 
 ```
-idasen-controller --forward --sit
+favourites:
+  sit: 683
+  stand: 1040
 ```
+
+Then you can also pass the favourite name to the `--move-to` command:
+
+```
+idasen-controller --move-to sit
+```
+
+### Using the Server
+
+You can run the script in a server mode. This will maintain a persistent connection to the desk and then listen on the specified port for commands. This has a number of uses, one of which is making the response time a lot quicker. Both the server and client will print the current height and speed of the desk as it moves.
+
+Remember to ensure that the ports and IPs are configured in both the server and client `config.yaml` files (or provide them as command line arguments).
+
+You can start the server like this:
+
+```
+idasen-controller --server
+```
+
+And then on the same or different device:
+
+```
+idasen-controller --forward --move-to 800
+```
+
+You can also use any of the favourites that are configured on the server:
+
+```
+idasen-controller --forward --move-to stand
+```
+
+There is also a simpler TCP server mode which allows you to send commands without needing a copy of the script on the client. You can start the tcp server with:
+
+```
+idasen-controller --tcp-server
+```
+
+And then use any tool you like to send commands. For example you could use `nc` on linux:
+
+```
+echo '{"move_to": 640}' | nc -w 1 127.0.0.1 9123
+```
+
+In this mode the client will not receive any height or speed values.
 
 ## Troubleshooting
 
@@ -104,7 +146,7 @@ The initial connection can fail for a variety of reasons, here are some things t
 ### Connection / commands are slow
 
 - Try reducing the `connection-timeout`. I have found that it can work well set to just `1` second. You may find that a low connection timeout results in failed connections sometimes though.
-- Use the server mode. Run the script once with `--server` which will start a persistent server and maintain a connection to the desk. Then when sending commands (like `--stand` or `--sit`) just add the additional argument `--forward` to forward the command to the server. The server should already have a connection so the desk should respond much quicker.
+- Use the server mode. Run the script once with `--server` which will start a persistent server and maintain a connection to the desk. Then when sending commands (like `--move-to sit` or `--move-to 800`) just add the additional argument `--forward` to forward the command to the server. The server should already have a connection so the desk should respond much quicker.
 
 ### Error message "abort" on MacOS
 
@@ -137,3 +179,15 @@ Then you can run all the same commands with:
 python3 idasen_controller/main.py <command>
 
 ```
+
+## Projects using this project
+
+Other useful projects that make use of this one:
+
+- [Home Assistant Integration](https://github.com/j5lien/esphome-idasen-desk-controller) by @j5lien
+
+## Attribution
+
+Some ideas stolen from:
+
+- [idasen-controller](https://github.com/pfilipp/idasen-controller) by @pfilipp for working out the functionality of the REFERENCE_INPUT characteristic which allows more accurate movement.
