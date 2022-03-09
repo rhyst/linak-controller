@@ -62,22 +62,19 @@ config = {
     "mac_address": None,
     "base_height": DEFAULT_BASE_HEIGHT,
     "movement_range": DEFAULT_MOVEMENT_RANGE,
-    "stand_height": DEFAULT_BASE_HEIGHT + 420,
-    "sit_height": DEFAULT_BASE_HEIGHT + 63,
     "adapter_name": "hci0",
     "scan_timeout": 5,
     "connection_timeout": 10,
     "movement_timeout": 30,
-    "sit": False,
-    "stand": False,
-    "monitor": False,
-    "move_to": None,
-    "move_to_raw": None,
     "server_address": "127.0.0.1",
     "server_port": 9123,
+    "favourites": {},
 }
 
 parser = argparse.ArgumentParser(description="")
+
+# Config via command line options
+
 parser.add_argument(
     "--mac-address", dest="mac_address", type=str, help="Mac address of the Idasen desk"
 )
@@ -92,30 +89,6 @@ parser.add_argument(
     dest="movement_range",
     type=int,
     help="How far above base-height the desk can extend (mm)",
-)
-parser.add_argument(
-    "--stand-height",
-    dest="stand_height",
-    type=int,
-    help="The height the desk should be at when standing (mm)",
-)
-parser.add_argument(
-    "--sit-height",
-    dest="sit_height",
-    type=int,
-    help="The height the desk should be at when sitting (mm)",
-)
-parser.add_argument(
-    "--stand-height-offset",
-    dest="stand_height_offset",
-    type=int,
-    help="The height above base height the desk should be at when standing (mm)",
-)
-parser.add_argument(
-    "--sit-height-offset",
-    dest="sit_height_offset",
-    type=int,
-    help="The height above base height the desk should be at when sitting (mm)",
 )
 parser.add_argument(
     "--adapter", dest="adapter_name", type=str, help="The bluetooth adapter device name"
@@ -163,24 +136,20 @@ parser.add_argument(
     help="File path to the config file (Default: {})".format(DEFAULT_CONFIG_PATH),
     default=DEFAULT_CONFIG_PATH,
 )
+
+# Command to run
+
 cmd = parser.add_mutually_exclusive_group()
 cmd.add_argument(
-    "--sit", dest="sit", action="store_true", help="Move the desk to sitting height"
-)
-cmd.add_argument(
-    "--stand",
-    dest="stand",
+    "--watch",
+    dest="watch",
     action="store_true",
-    help="Move the desk to standing height",
+    help="Watch for changes to desk height and speed and print them",
 )
 cmd.add_argument(
-    "--monitor",
-    dest="monitor",
-    action="store_true",
-    help="Monitor desk height and speed",
-)
-cmd.add_argument(
-    "--move-to", dest="move_to", type=int, help="Move desk to specified height (mm)"
+    "--move-to",
+    dest="move_to",
+    help="Move desk to specified height (mm) or to a favourite position",
 )
 cmd.add_argument(
     "--scan",
@@ -193,6 +162,12 @@ cmd.add_argument(
     dest="server",
     action="store_true",
     help="Run as a server to accept forwarded commands",
+)
+cmd.add_argument(
+    "--tcp-server",
+    dest="tcp_server",
+    action="store_true",
+    help="Run as a simple TCP server to accept forwarded commands",
 )
 
 args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
@@ -221,15 +196,6 @@ MAX_HEIGHT = BASE_HEIGHT + config["movement_range"]
 if not config["mac_address"]:
     parser.error("Mac address must be provided")
 
-if config["sit_height"] >= config["stand_height"]:
-    parser.error("Sit height must be less than stand height")
-
-if config["sit_height"] < BASE_HEIGHT:
-    parser.error("Sit height must be greater than {}".format(BASE_HEIGHT))
-
-if config["stand_height"] > MAX_HEIGHT:
-    parser.error("Stand height must be less than {}".format(MAX_HEIGHT))
-
 if "sit_height_offset" in config:
     if not (0 <= config["sit_height_offset"] <= config["movement_range"]):
         parser.error(
@@ -247,10 +213,6 @@ if "stand_height_offset" in config:
     config["stand_height"] = BASE_HEIGHT + config["stand_height_offset"]
 
 config["mac_address"] = config["mac_address"].upper()
-config["stand_height_raw"] = mmToRaw(config["stand_height"])
-config["sit_height_raw"] = mmToRaw(config["sit_height"])
-if config["move_to"]:
-    config["move_to_raw"] = mmToRaw(config["move_to"])
 
 if IS_WINDOWS:
     # Windows doesn't use this parameter so rename it so it looks nice for the logs
@@ -373,28 +335,27 @@ async def run_command(client, config, log=print):
     )
     log("Height: {:4.0f}mm".format(rawToMM(initial_height)))
     target = None
-    if config["monitor"]:
+    if config.get("watch"):
         # Print changes to height data
+        log("Watching for changes to desk height and speed")
         await subscribe(
             client, UUID_HEIGHT, partial(get_height_data_from_notification, log=log)
         )
         wait = asyncio.get_event_loop().create_future()
         await wait
-    elif config["sit"]:
-        # Move to configured sit height
-        target = config["sit_height_raw"]
-        await move_to(client, target, log=log)
-    elif config["stand"]:
-        # Move to configured stand height
-        target = config["stand_height_raw"]
-        await move_to(client, target, log=log)
-    elif config["move_to"]:
+    elif config.get("move_to"):
         # Move to custom height
-        target = mmToRaw(config["move_to"])
-        await move_to(client, target, log=log)
-    elif config["move_to_raw"]:
-        # Move to custom raw height
-        target = config["move_to_raw"]
+        favouriteValue = config.get("favourites", {}).get(config["move_to"])
+        if favouriteValue:
+            target = mmToRaw(favouriteValue)
+            log(f'Moving to favourite height: {config["move_to"]}')
+        else:
+            try:
+                target = mmToRaw(int(config["move_to"]))
+                log(f'Moving to height: {config["move_to"]}')
+            except ValueError:
+                log(f'Not a valid height or favourite position: {config["move_to"]}')
+                return
         await move_to(client, target, log=log)
     if target:
         final_height, speed = struct.unpack(
@@ -406,6 +367,33 @@ async def run_command(client, config, log=print):
                 rawToMM(final_height), rawToMM(target)
             )
         )
+
+
+async def run_tcp_server(client, config):
+    """Start a simple tcp server to listen for commands"""
+
+    def disconnect_callback(client, _=None):
+        print("Lost connection with {}".format(client.address))
+        asyncio.create_task(connect(client))
+
+    client.set_disconnected_callback(disconnect_callback)
+    server = await asyncio.start_server(
+        partial(run_tcp_forwarded_command, client, config),
+        config["server_address"],
+        config["server_port"],
+    )
+    print("TCP Server listening")
+    await server.serve_forever()
+
+
+async def run_tcp_forwarded_command(client, config, reader, writer):
+    """Run commands received by the tcp server"""
+    print("Received command")
+    request = (await reader.read()).decode("utf8")
+    forwarded_config = json.loads(str(request))
+    merged_config = {**config, **forwarded_config}
+    await run_command(client, merged_config)
+    writer.close()
 
 
 async def run_server(client, config):
@@ -423,6 +411,7 @@ async def run_server(client, config):
     await runner.setup()
     site = web.TCPSite(runner, config["server_address"], config["server_port"])
     await site.start()
+    print("Server listening")
     while True:
         await asyncio.sleep(1000)
 
@@ -450,7 +439,7 @@ async def run_forwarded_command(client, config, request):
 
 async def forward_command(config):
     """Send commands to a server instance of this script"""
-    allowed_keys = ["sit", "stand", "move_to", "move_to_raw"]
+    allowed_keys = ["move_to"]
     forwarded_config = {key: config[key] for key in allowed_keys if key in config}
     session = aiohttp.ClientSession()
     ws = await session.ws_connect(
@@ -481,11 +470,13 @@ async def main():
             client = await connect()
             if config["server"]:
                 await run_server(client, config)
+            elif config.get("tcp_server"):
+                await run_tcp_server(client, config)
             else:
                 await run_command(client, config, print)
-    # except Exception as e:
-    #     print("\nSomething unexpected went wrong:")
-    #     print(e)
+    except Exception as e:
+        print("\nSomething unexpected went wrong:")
+        print(e)
     finally:
         if client:
             print("\rDisconnecting\r", end="")

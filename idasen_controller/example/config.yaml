@@ -1,9 +1,10 @@
 mac_address: AA:AA:AA:AA:AA:AA
-stand_height: 1040
-sit_height: 683
 scan_timeout: 5
 connection_timeout: 10
 movement_timeout: 30
 adapter_name: hci0
 server_address: "127.0.0.1"
 server_port: 9123
+favourites:
+  sit: 683
+  stand: 1040
