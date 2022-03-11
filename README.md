@@ -106,13 +106,15 @@ The initial connection can fail for a variety of reasons, here are some things t
 - Try reducing the `connection-timeout`. I have found that it can work well set to just `1` second. You may find that a low connection timeout results in failed connections sometimes though.
 - Use the server mode. Run the script once with `--server` which will start a persistent server and maintain a connection to the desk. Then when sending commands (like `--stand` or `--sit`) just add the additional argument `--forward` to forward the command to the server. The server should already have a connection so the desk should respond much quicker.
 
-### "abort" on MacOS
+### Error message "abort" on MacOS
 
 On MacOS the process may quit with a vague message like `abort`. This could be because the application running the process doesn't have access to Bluetooth. To provide access, open `System Preferences -> Security & Privacy -> Privacy -> Bluetooth` and drag the application running the process into the list (eg. Terminal or iTerm2). [More info at the `bleak` issue](https://github.com/hbldh/bleak/issues/438#issuecomment-787125189)
 
-### Scanning returns no devices on MacOS 12 (Monterey)
+### Scanning and connection issues on MacOS 12 (Monterey)
 
-It seems like it is no longer possible to scan for devices on MacOS 12, [see this bleak issue for more info](https://github.com/hbldh/bleak/issues/635#issuecomment-988054876). You should acquire the UUID of your device using [Bluetility](https://github.com/jnross/Bluetility) or similair and avoid using the `--scan` function.
+There was a bug with MacOS 12 that prevents connecting to bluetooth devices with this script [see this issue](https://github.com/rhyst/idasen-controller/issues/33) or [this bleak issue for more info](https://github.com/hbldh/bleak/issues/635#issuecomment-988054876).
+
+You should update to MacOS 12.3 which fixes this issue.
 
 ## Recipes
 
