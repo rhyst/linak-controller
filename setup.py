@@ -10,7 +10,7 @@ with open(path.join(this_directory, "README.md")) as f:
 
 setup(
     name="idasen-controller",
-    version="1.1.0",
+    version="2.0.0",
     author="Rhys Tyers",
     author_email="",
     url="https://github.com/rhyst/idasen-controller",

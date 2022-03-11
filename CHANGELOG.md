@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2022-03-08
+
+### Changed
+
+- Replaced `--sit/--stand` commands with a more configurable list of favourites that can be actived with `--move-to <favourite-name>`
+
 ## [1.1.0] - 2022-03-08
 
 ### Added

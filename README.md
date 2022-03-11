@@ -38,20 +38,20 @@ Configuration can be provided with a file, or via command line arguments. Use `-
 
 Config options:
 
-| Option               | Description                                                                        | Default     |
-| -------------------- | ---------------------------------------------------------------------------------- | ----------- |
-| `mac_address`        | The MAC address of the desk. This is required.                                     |             |
-| `base_height`        | The lowest possible height (mm) of the desk top from the floor.                    | `620`.      |
-| `movement_range`     | How far above base height the desk can extend (mm).                                | `650`.      |
-| `adapter_name`       | The adapter name for the bluetooth adapter to use for the connection (Linux only). | `hci0`      |
-| `scan_timeout`       | Timeout to scan for the device (seconds).                                          | `5`         |
-| `connection_timeout` | Timeout to obtain connection (seconds).                                            | `10`        |
-| `movement_timeout`   | Timeout for waiting for the desk to reach the specified height (seconds).          | `30`        |
-| `server_address`     | The address the server should run at (if running server).                          | `127.0.0.1` |
-| `server_port`        | The port the server should run on (if running server).                             | `9123`      |
-| `favourites`         | Favourite heights object where the key is the name and the value is the height     | ``          |
+| Option               | Description                                                                        | Default                     |
+| -------------------- | ---------------------------------------------------------------------------------- | --------------------------- |
+| `mac_address`        | The MAC address (or UUID on MacOS) of the desk. This is required.                  |                             |
+| `base_height`        | The lowest possible height (mm) of the desk top from the floor.                    | `620`.                      |
+| `movement_range`     | How far above base height the desk can extend (mm).                                | `650`.                      |
+| `adapter_name`       | The adapter name for the bluetooth adapter to use for the connection (Linux only). | `hci0`                      |
+| `scan_timeout`       | Timeout to scan for the device (seconds).                                          | `5`                         |
+| `connection_timeout` | Timeout to obtain connection (seconds).                                            | `10`                        |
+| `movement_timeout`   | Timeout for waiting for the desk to reach the specified height (seconds).          | `30`                        |
+| `server_address`     | The address the server should run at (if running server).                          | `127.0.0.1`                 |
+| `server_port`        | The port the server should run on (if running server).                             | `9123`                      |
+| `favourites`         | Favourite heights object where the key is the name and the value is the height     | `{ sit: 683, stand: 1040 }` |
 
-All of these options can be set on the command line, just replace any `_` with `-` e.g. `mac_address` becomes `--mac-address`.
+All of these options (except `favourites`) can be set on the command line, just replace any `_` with `-` e.g. `mac_address` becomes `--mac-address`.
 
 #### Device MAC addresses
 
