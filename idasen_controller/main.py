@@ -291,7 +291,6 @@ async def move_to(client, target, log=print):
         if speed == 0:
             break
 
-    await unsubscribe(client, UUID_HEIGHT)
 
 
 async def scan():
