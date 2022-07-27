@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2022-07-27
+
+### Fixed
+
+- Removed unnecessary unsubscribe command that was leftover from previous refactor and causing a `bleak.exc.BleakDBusError: [org.bluez.Error.Failed] No notify session started` error.
+
 ## [2.0.0] - 2022-03-08
 
 ### Changed
