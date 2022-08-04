@@ -9,7 +9,7 @@ You can use the [albert](https://github.com/albertlauncher/albert) launcher alon
 ```
 [Desktop Entry]
 Name=Desk - Sit
-Exec=/path/to/idasen-controller --sit
+Exec=/path/to/idasen-controller --move-to sit
 Icon=/home/user/idasen-controller/sit-icon.png
 Type=Application
 Comment=Lower desk to sitting height.
@@ -24,10 +24,10 @@ You can add some cron jobs to automatically raise and lower your desk. This way,
 The following cron raises the desk at 10 AM and 3 PM, and lowers it an hour later, Monday through Friday.
 
 ```
-00 10 * * 1-5 python3 idasen-controller --stand
-00 11 * * 1-5 python3 idasen-controller --sit
-00 15 * * 1-5 python3 idasen-controller --stand
-00 16 * * 1-5 python3 idasen-controller --sit
+00 10 * * 1-5 python3 idasen-controller --move-to stand
+00 11 * * 1-5 python3 idasen-controller --move-to sit
+00 15 * * 1-5 python3 idasen-controller --move-to stand
+00 16 * * 1-5 python3 idasen-controller --move-to sit
 ```
 
 ## Windows
