@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unrelease]
+
+### Changed
+
+- Update aiohttp dependency
+- Use poetry for dependency management
+- Removed old options from RECIPES.md
+
 ## [2.0.1] - 2022-07-27
 
 ### Fixed

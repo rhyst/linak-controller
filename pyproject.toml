@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "idasen-controller"
+version = "2.0.2rc3"
+description = "Command line tool for controlling the Ikea Idasen (Linak) standing desk"
+authors = ["Rhys Tyers"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.7.3"
+aiohttp = "3.8.3"
+appdirs = "1.4.4"
+bleak = ">=0.14.2,<=0.16.0"
+PyYAML = ">=5.4.1,<=6.0.0"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+idasen-controller = 'idasen_controller.main:init'
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
