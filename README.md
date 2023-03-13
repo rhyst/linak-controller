@@ -164,20 +164,34 @@ There is a page with a few examples of different ways to use the script: [RECIPE
 
 ## Development
 
-To run the script without installing via pip first install the requirements:
+Install the dependencies with poetry:
 
 ```
-
-pip3 install -r requirements.txt
-
+poetry install
 ```
 
-Then you can run all the same commands with:
+Then you can run the script with:
 
 ```
+poetry run idasen_controller/main.py <command>
+```
 
-python3 idasen_controller/main.py <command>
+You can also install the project in editable/development mode with:
 
+```
+pip install -e .
+```
+
+To build the project for publishing run:
+
+```
+./scripts/build
+```
+
+And to publish the project to PyPi run:
+
+```
+./scripts/publish
 ```
 
 ## Projects using this project
