@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import traceback
 import shutil
 import struct
 import argparse
@@ -9,6 +10,7 @@ import asyncio
 import aiohttp
 from aiohttp import web
 from bleak import BleakClient, BleakError, BleakScanner
+from bleak.exc import BleakDBusError
 import json
 from functools import partial
 from appdirs import user_config_dir
@@ -32,9 +34,10 @@ def rawToSpeed(raw):
 
 # GATT CHARACTERISTIC AND COMMAND DEFINITIONS
 
-UUID_HEIGHT = "99fa0021-338a-1024-8a49-009c0215f78a"
-UUID_COMMAND = "99fa0002-338a-1024-8a49-009c0215f78a"
-UUID_REFERENCE_INPUT = "99fa0031-338a-1024-8a49-009c0215f78a"
+UUID_HEIGHT = "99fa0021-338a-1024-8a49-009c0215f78a" # Read height and speed
+UUID_COMMAND = "99fa0002-338a-1024-8a49-009c0215f78a" # Write commands
+UUID_DPG = "99fa0011-338a-1024-8a49-009c0215f78a" # Write ?
+UUID_REFERENCE_INPUT = "99fa0031-338a-1024-8a49-009c0215f78a" # Write ?
 
 COMMAND_STOP = bytearray(struct.pack("<H", 255))
 COMMAND_WAKEUP = bytearray(struct.pack("<H", 254))
@@ -169,6 +172,12 @@ cmd.add_argument(
     action="store_true",
     help="Run as a simple TCP server to accept forwarded commands",
 )
+cmd.add_argument(
+    "--print-exceptions",
+    dest="print_exceptions",
+    action="store_true",
+    help="Print normally harmless exceptions that are hidden",
+)
 
 args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
 
@@ -221,6 +230,11 @@ if IS_WINDOWS:
 # MAIN PROGRAM
 
 
+def handle_exception(e):
+    if config["print_exceptions"]:
+        print(traceback.format_exc())
+
+
 async def get_height_speed(client):
     return struct.unpack("<Hh", await client.read_gatt_char(UUID_HEIGHT))
 
@@ -246,10 +260,10 @@ async def move_to_target(client, target):
 async def stop(client):
     try:
         await client.write_gatt_char(UUID_COMMAND, COMMAND_STOP)
-    except BleakError as e:
-        # This seems to result in a an error on Raspberry Pis but it does not affect movement
+    except BleakDBusError as e:
+        # Harmless exception that happens on Raspberry Pis
         # bleak.exc.BleakDBusError: [org.bluez.Error.NotPermitted] Write acquired
-        pass
+        handle_exception(e)
 
 
 async def subscribe(client, uuid, callback):
@@ -259,11 +273,7 @@ async def subscribe(client, uuid, callback):
 
 async def unsubscribe(client, uuid):
     """Stop listenening for notifications on a characteristic"""
-    try:
-        await client.stop_notify(uuid)
-    except KeyError:
-        # This happens on windows, I don't know why
-        pass
+    await client.stop_notify(uuid)
 
 
 async def move_to(client, target, log=print):
@@ -292,7 +302,6 @@ async def move_to(client, target, log=print):
             break
 
 
-
 async def scan():
     """Scan for a bluetooth device with the configured address and return it or return all devices if no address specified"""
     print("Scanning\r", end="")
@@ -316,9 +325,14 @@ async def connect(client=None, attempt=0):
         return client
     except BleakError as e:
         print("Connecting failed")
-        print(e)
+        if ("was not found" in str(e)):
+            print(e)
+        else:
+            print(traceback.format_exc())
         os._exit(1)
-
+    except asyncio.exceptions.TimeoutError as e:
+        print("Connecting failed - timed out")
+        os._exit(1)
 
 async def disconnect(client):
     """Attempt to disconnect cleanly"""
@@ -475,7 +489,7 @@ async def main():
                 await run_command(client, config, print)
     except Exception as e:
         print("\nSomething unexpected went wrong:")
-        print(e)
+        print(traceback.format_exc())
     finally:
         if client:
             print("\rDisconnecting\r", end="")
