@@ -2,11 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unrelease]
+## [2.0.2]
 
 ### Changed
 
-- Update aiohttp dependency
+- Update aiohttp dependency to 3.8.4
+- Update bleak dependency to 0.19.5
 - Use poetry for dependency management
 - Removed old options from RECIPES.md
 

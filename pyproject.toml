@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "idasen-controller"
-version = "2.0.2rc3"
+version = "2.0.2"
 description = "Command line tool for controlling the Ikea Idasen (Linak) standing desk"
 authors = ["Rhys Tyers"]
 license = "MIT"
