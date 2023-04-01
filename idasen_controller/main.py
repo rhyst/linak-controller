@@ -333,6 +333,9 @@ async def connect(client=None, attempt=0):
     except asyncio.exceptions.TimeoutError as e:
         print("Connecting failed - timed out")
         os._exit(1)
+    except OSError as e:
+        print(e)
+        os._exit(1)
 
 async def disconnect(client):
     """Attempt to disconnect cleanly"""
