@@ -361,7 +361,7 @@ async def run_command(client, config, log=print):
         favouriteValue = config.get("favourites", {}).get(config["move_to"])
         if favouriteValue:
             target = mmToRaw(favouriteValue)
-            log(f'Moving to favourite height: {config["move_to"]}')
+            log(f'Moving to favourite height: {config["move_to"]} ({favouriteValue} mm)')
         else:
             try:
                 target = mmToRaw(int(config["move_to"]))
