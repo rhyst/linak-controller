@@ -372,6 +372,9 @@ async def run_command(client, config, log=print):
             except ValueError:
                 log(f'Not a valid height or favourite position: {config["move_to"]}')
                 return
+        if target == initial_height:
+            log(f'Nothing need to do')
+            return
         await move_to(client, target, log=log)
     if target:
         final_height, speed = struct.unpack(
