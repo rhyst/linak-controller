@@ -293,13 +293,13 @@ async def move_to(client, target, log=print):
         await move_to_target(client, target)
         await asyncio.sleep(0.5)
         height, speed = await get_height_speed(client)
+        if speed == 0:
+            break
         log(
             "Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(
                 rawToMM(height), rawToSpeed(speed)
             )
         )
-        if speed == 0:
-            break
 
 
 async def scan():
@@ -333,6 +333,9 @@ async def connect(client=None, attempt=0):
     except asyncio.exceptions.TimeoutError as e:
         print("Connecting failed - timed out")
         os._exit(1)
+    except OSError as e:
+        print(e)
+        os._exit(1)
 
 async def disconnect(client):
     """Attempt to disconnect cleanly"""
@@ -361,7 +364,7 @@ async def run_command(client, config, log=print):
         favouriteValue = config.get("favourites", {}).get(config["move_to"])
         if favouriteValue:
             target = mmToRaw(favouriteValue)
-            log(f'Moving to favourite height: {config["move_to"]}')
+            log(f'Moving to favourite height: {config["move_to"]} ({favouriteValue} mm)')
         else:
             try:
                 target = mmToRaw(int(config["move_to"]))
@@ -369,6 +372,9 @@ async def run_command(client, config, log=print):
             except ValueError:
                 log(f'Not a valid height or favourite position: {config["move_to"]}')
                 return
+        if target == initial_height:
+            log(f'Nothing to do - already at specified height')
+            return
         await move_to(client, target, log=log)
     if target:
         final_height, speed = struct.unpack(
