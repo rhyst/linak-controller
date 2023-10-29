@@ -41,7 +41,6 @@ Config options:
 | Option               | Description                                                                                  | Default                                              |
 | -------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | `mac_address`        | The MAC address (or UUID on MacOS) of the desk. This is required.                            |                                                      |
-| `user_id`            | The user ID (in hex) to use when connecting to the desk. This should not need to be changed. | `01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11` |
 | `base_height`        | The lowest possible height (mm) of the desk top from the floor.                              | `620`.                                               |
 | `movement_range`     | How far above base height the desk can extend (mm).                                          | `650`.                                               |
 | `adapter_name`       | The adapter name for the bluetooth adapter to use for the connection (Linux only).           | `hci0`                                               |
