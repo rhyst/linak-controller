@@ -2,7 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.0.2]
+## [2.1.0] - Unreleased
+
+### Added
+
+- Add setting a user ID on first connection
+
+### Changed
+
+- Python version changed to >=3.8 <3.13 to satisfy dependencies
+- Bleak updated to 0.21.1
+- Refactor into seperate files and helper classes
+- Removed `print-exceptions` option
+
+## [2.0.2] - 2023-03-13
 
 ### Changed
 
@@ -10,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Update bleak dependency to 0.19.5
 - Use poetry for dependency management
 - Removed old options from RECIPES.md
+
 
 ## [2.0.1] - 2022-07-27
 
