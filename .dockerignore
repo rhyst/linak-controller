@@ -1,0 +1,5 @@
+*
+!poetry.lock
+!pyproject.toml
+!docker_entrypoint.sh
+!idasen_controller/

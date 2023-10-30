@@ -1,0 +1,23 @@
+# Do `sudo killall -9 bluetoothd` on your host before starting.
+
+version: '3'
+services:
+  idasencontroller:
+    build: .
+    restart: always
+
+    volumes:
+      # your configuration file:
+      - "./data/config.yaml:/app/config.yaml:ro"
+      # remember paired bluetooth devices:
+      - "./data/bluetooth/:/var/lib/bluetooth/:rw"
+
+#      - "/dev/bus/usb:/dev/bus/usb"
+#      - "/var/run/dbus:/var/run/dbus"
+
+    # required for bluetooth:
+#    privileged: true
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
