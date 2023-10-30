@@ -31,7 +31,7 @@ class Desk:
             # Set user_id to more privileged
             user_id[0] = 1
             print("Setting user ID to {}".format(bytes_to_hex(user_id)))
-            #await DPGService.dpg_command(client, DPGService.DPG.CMD_USER_ID, user_id)
+            await DPGService.dpg_command(client, DPGService.DPG.CMD_USER_ID, user_id)
 
         # Check if base height should be taken from controller
         if config.base_height == 0:
@@ -55,8 +55,8 @@ class Desk:
         if initial_height.value == target.value:
             return
 
-        await ControlService.wakeup(client)
-        await ControlService.stop(client)
+        await cls.wakeup(client)
+        await cls.stop(client)
 
         data = ReferenceInputService.encode_height(target.value)
 
