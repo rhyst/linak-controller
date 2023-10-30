@@ -28,7 +28,6 @@ class Commands(str, Enum):
 class Config:
     # Config
     mac_address: Optional[str] = None
-    user_id: str = "01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11"
     base_height: int = DEFAULT_BASE_HEIGHT
     max_height: int = DEFAULT_BASE_HEIGHT + DEFAULT_MOVEMENT_RANGE
     movement_range: int = DEFAULT_MOVEMENT_RANGE
@@ -69,12 +68,6 @@ class Config:
             dest="mac_address",
             type=str,
             help="Mac address of the Linak desk",
-        )
-        parser.add_argument(
-            "--user-id",
-            dest="user_id",
-            type=str,
-            help="User ID to use when connecting to the desk",
         )
         parser.add_argument(
             "--base-height",

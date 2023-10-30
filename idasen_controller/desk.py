@@ -14,23 +14,34 @@ from .gatt import (
 )
 from .config import config
 from .util import bytes_to_hex, Height, Speed
+import struct
 
 
 class Desk:
     @classmethod
     async def initialise(cls, client: BleakClient) -> None:
-        # Read the user id
-
+        # Read capabilities
         capabilities =  cls.decode_capabilities(await DPGService.dpg_command(client, DPGService.DPG.CMD_GET_CAPABILITIES))
         print("Capabilities: {}".format(capabilities))
-        
-        user_id = (await DPGService.dpg_command(client, DPGService.DPG.CMD_USER_ID))[2:]
-        user_id_hex = bytes_to_hex(user_id)
-        print("User ID: {}".format(user_id_hex))
-        if user_id_hex != config.user_id:
-            print("Setting user ID to".format(config.user_id))
-            await DPGService.dpg_command(client, DPGService.DPG.CMD_USER_ID, bytearray.fromhex(config.user_id))
-            
+
+        # Read the user id
+        user_id = (await DPGService.dpg_command(client, DPGService.DPG.CMD_USER_ID))
+        print("User ID: {}".format(bytes_to_hex(user_id)))
+        if user_id and user_id[0] != 1:
+            # Set user_id to more privileged
+            user_id[0] = 1
+            print("Setting user ID to {}".format(bytes_to_hex(user_id)))
+            await DPGService.dpg_command(client, DPGService.DPG.CMD_USER_ID, user_id)
+
+        # Check if base height should be taken from controller
+        if config.base_height == 0:
+            resp = (await DPGService.dpg_command(client, DPGService.DPG.CMD_BASE_OFFSET))
+            if resp:
+                base_height = struct.unpack("<H", resp[1:])[0]
+                print("base_height taken from controller {}".format(base_height))
+                config.base_height = base_height/10
+                config.max_height = config.base_height + config.movement_range
+
 
 
     @classmethod
@@ -44,8 +55,8 @@ class Desk:
         if initial_height.value == target.value:
             return
 
-        await ControlService.wakeup(client)
-        await ControlService.stop(client)
+        await cls.wakeup(client)
+        await cls.stop(client)
 
         data = ReferenceInputService.encode_height(target.value)
 
@@ -86,8 +97,7 @@ class Desk:
             pass
 
     @classmethod
-    def decode_capabilities(cls, data: bytearray) -> dict:
-        caps = data[2:]
+    def decode_capabilities(cls, caps: bytearray) -> dict:
         if len(caps) < 2:
             return {}
         capByte = caps[0]
