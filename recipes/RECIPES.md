@@ -9,14 +9,14 @@ You can use the [albert](https://github.com/albertlauncher/albert) launcher alon
 ```
 [Desktop Entry]
 Name=Desk - Sit
-Exec=/path/to/idasen-controller --move-to sit
-Icon=/home/user/idasen-controller/sit-icon.png
+Exec=/path/to/linak-controller --move-to sit
+Icon=/home/user/linak-controller/sit-icon.png
 Type=Application
 Comment=Lower desk to sitting height.
 
 ```
 
-(You can find the `idasen-controller` path with `where idasen-controller`)
+(You can find the `linak-controller` path with `where linak-controller`)
 
 ### Scheduled standing periods
 
@@ -24,10 +24,10 @@ You can add some cron jobs to automatically raise and lower your desk. This way,
 The following cron raises the desk at 10 AM and 3 PM, and lowers it an hour later, Monday through Friday.
 
 ```
-00 10 * * 1-5 python3 idasen-controller --move-to stand
-00 11 * * 1-5 python3 idasen-controller --move-to sit
-00 15 * * 1-5 python3 idasen-controller --move-to stand
-00 16 * * 1-5 python3 idasen-controller --move-to sit
+00 10 * * 1-5 python3 linak-controller --move-to stand
+00 11 * * 1-5 python3 linak-controller --move-to sit
+00 15 * * 1-5 python3 linak-controller --move-to stand
+00 16 * * 1-5 python3 linak-controller --move-to sit
 ```
 
 ## macOS
@@ -36,13 +36,13 @@ The following cron raises the desk at 10 AM and 3 PM, and lowers it an hour late
 
 Get into different body positions regularly, the next position is the best!
 
-1. Find out path of `idasen-controller`
+1. Find out path of `linak-controller`
 
    ```
-   which idasen-controller
+   which linak-controller
    ```
 
-   For example installed with Homebrew `/opt/homebrew/bin/idasen-controller`
+   For example installed with Homebrew `/opt/homebrew/bin/linak-controller`
 
 
 2. Edit crontab
@@ -54,12 +54,12 @@ Get into different body positions regularly, the next position is the best!
 3. Insert schedules to move desk to stand and sit position. Replace `<path>` from 1. step
 
    ```
-   00 6-18/2 * * 1-5 <path>/idasen-controller --move-to stand >/dev/null 2>&1
-   25 6-18/2 * * 1-5 <path>/idasen-controller --move-to sit >/dev/null 2>&1
-   50 6-18/2 * * 1-5 <path>/idasen-controller --move-to stand >/dev/null 2>&1
-   10 7-18/2 * * 1-5 <path>/idasen-controller --move-to sit >/dev/null 2>&1
-   30 7-18/2 * * 1-5 <path>/idasen-controller --move-to stand >/dev/null 2>&1
-   45 7-18/2 * * 1-5 <path>/idasen-controller --move-to sit >/dev/null 2>&1 
+   00 6-18/2 * * 1-5 <path>/linak-controller --move-to stand >/dev/null 2>&1
+   25 6-18/2 * * 1-5 <path>/linak-controller --move-to sit >/dev/null 2>&1
+   50 6-18/2 * * 1-5 <path>/linak-controller --move-to stand >/dev/null 2>&1
+   10 7-18/2 * * 1-5 <path>/linak-controller --move-to sit >/dev/null 2>&1
+   30 7-18/2 * * 1-5 <path>/linak-controller --move-to stand >/dev/null 2>&1
+   45 7-18/2 * * 1-5 <path>/linak-controller --move-to sit >/dev/null 2>&1 
    ```
 
    This cronjob runs between 6am and 6pm, for example:
@@ -68,9 +68,9 @@ Get into different body positions regularly, the next position is the best!
 
    Note: Long-lasting constant body positions should be avoided. This applies to sitting and(!) standing.
 
-4. Add `idasen-controller` and `cron` in macOS *System Preferences* → *Security* → *Bluetooth*
+4. Add `linak-controller` and `cron` in macOS *System Preferences* → *Security* → *Bluetooth*
 
-   Without this important step `idasen-controller` will not move the desk because Bluetooth permissions are missing.
+   Without this important step `linak-controller` will not move the desk because Bluetooth permissions are missing.
 
    ![macOS System Preferences](images/macos-system-preferences-security-bluetooth.png)
 
@@ -117,17 +117,17 @@ RUN apt install bluez -y
 
 RUN apt install build-essential libglib2.0-dev libical-dev libreadline-dev libudev-dev libdbus-1-dev libdbus-glib-1-dev bluetooth libbluetooth-dev usbutils -y
 
-RUN pip3 install idasen-controller
+RUN pip3 install linak-controller
 
 COPY config.yaml .
 
-ENTRYPOINT ["idasen-contoller", "--config", "config.yaml"]
+ENTRYPOINT ["linak-contoller", "--config", "config.yaml"]
 ```
 
 Build the image:
 
 ```
-docker build -t idasen-controller .
+docker build -t linak-controller .
 ```
 
 And then run it with the usual commands:
@@ -139,7 +139,7 @@ docker run -it --rm --privileged \
     --net=host \
     -v /dev/bus/usb:/dev/bus/usb \
     -v /var/run/dbus:/var/run/dbus \
-    idasen-controller --watch
+    linak-controller --watch
 ```
 
 From @maxime1992

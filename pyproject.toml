@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "idasen-controller"
-version = "2.1.0.dev"
-description = "Command line tool for controlling the Ikea Idasen (Linak) standing desk"
+name = "linak-controller"
+version = "1.0.2" 
+description = "Command line tool for controlling the Linak standing desks"
 authors = ["Rhys Tyers"]
 license = "MIT"
 
@@ -13,7 +13,8 @@ bleak = "^0.21.1"
 PyYAML = "^6.0"
 
 [tool.poetry.scripts]
-idasen-controller = 'idasen_controller.main:init'
+linak-controller = 'linak_controller.main:init'
+idasen-controller = 'linak_controller.main:init'
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.10.1"

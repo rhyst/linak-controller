@@ -1,22 +1,25 @@
-# idasen-controller
+# linak-controller
 
-The Idasen is a Linak standing desk sold by Ikea. It can be controlled by a physical switch on the desk or via bluetooth using an phone app. This is a script to control the Idasen via bluetooth from any other device.
+(Previously `idasen-controller`)
 
-Note: This script may work with other Linak desks but it is not guaranteed - see below
+Linak make motorised standing desks. They can be controlled by a physical switch on the desks or via bluetooth using an phone app. This is a script to control Linak desks via bluetooth from any other device.
+
+Note: This script may not work with all Linak desks - see below for comaptible models.
 
 ## Set up
 
 ### Prerequisites
 
 - Windows / Linux / Mac
-- The device should have Python 3 (the script has been tested down to 3.7.3)
+- The device should have Python 3
 - The desk should be paired to the device.
 
 ### Working Desks
 
-- Ikea Idasen - the only desk I can confidently say works because I have one
-- iMovr Lander - reportedly works because it is the same as an Idasen Desk [43](https://github.com/rhyst/idasen-controller/issues/43)
-- Linak DPG1C - Sporadic success reported with this device (help from anyone with this appreciated) [32](https://github.com/rhyst/idasen-controller/issues/32)
+- Ikea Idasen - works (my desk!)
+- iMovr Lander - reported working [43](https://github.com/rhyst/linak-controller/issues/43)
+- Linak DPG1C - reported working [32](https://github.com/rhyst/linak-controller/issues/32)
+- Linak DPG1M - reported working [32](https://github.com/rhyst/linak-controller/issues/32)
 
 If you find another desk model that works please make an issue to report it!
 
@@ -25,31 +28,30 @@ If you find another desk model that works please make an issue to report it!
 Install using pip:
 
 ```
-pip3 install idasen-controller
+pip3 install linak-controller
 ```
 
 ### Configuration
 
 Configuration can be provided with a file, or via command line arguments. Use `--help` to see the command line arguments help. Edit `<config_dir>/config.yaml` if you prefer your config to be in a file. `<config_dir>` is normally:
 
-- `~/.config/idasen-controller` on Linux
-- `C:\Users\<user>\AppData\Local\idasen-controller\idasen-controller` on Windows
-- `~/Library/Application Support/idasen-controller` on MacOS
+- `~/.config/linak-controller` on Linux
+- `C:\Users\<user>\AppData\Local\linak-controller\linak-controller` on Windows
+- `~/Library/Application Support/linak-controller` on MacOS
 
 Config options:
 
-| Option               | Description                                                                                  | Default                                              |
-| -------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `mac_address`        | The MAC address (or UUID on MacOS) of the desk. This is required.                            |                                                      |
-| `base_height`        | The lowest possible height (mm) of the desk top from the floor.                              | `620`.                                               |
-| `movement_range`     | How far above base height the desk can extend (mm).                                          | `650`.                                               |
-| `adapter_name`       | The adapter name for the bluetooth adapter to use for the connection (Linux only).           | `hci0`                                               |
-| `scan_timeout`       | Timeout to scan for the device (seconds).                                                    | `5`                                                  |
-| `connection_timeout` | Timeout to obtain connection (seconds).                                                      | `10`                                                 |
-| `movement_timeout`   | Timeout for waiting for the desk to reach the specified height (seconds).                    | `30`                                                 |
-| `server_address`     | The address the server should run at (if running server).                                    | `127.0.0.1`                                          |
-| `server_port`        | The port the server should run on (if running server).                                       | `9123`                                               |
-| `favourites`         | Favourite heights object where the key is the name and the value is the height               | `{ sit: 683, stand: 1040 }`                          |
+| Option               | Description                                                                                           | Default                     |
+| -------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------- |
+| `mac_address`        | The MAC address (or UUID on MacOS) of the desk. This is required.                                     |                             |
+| `base_height`        | The lowest possible height (mm) of the desk top from the floor By default this is read from the desk. | `null`.                     |
+| `adapter_name`       | The adapter name for the bluetooth adapter to use for the connection (Linux only).                    | `hci0`                      |
+| `scan_timeout`       | Timeout to scan for the device (seconds).                                                             | `5`                         |
+| `connection_timeout` | Timeout to obtain connection (seconds).                                                               | `10`                        |
+| `movement_timeout`   | Timeout for waiting for the desk to reach the specified height (seconds).                             | `30`                        |
+| `server_address`     | The address the server should run at (if running server).                                             | `127.0.0.1`                 |
+| `server_port`        | The port the server should run on (if running server).                                                | `9123`                      |
+| `favourites`         | Favourite heights object where the key is the name and the value is the height                        | `{ sit: 683, stand: 1040 }` |
 
 All of these options (except `favourites`) can be set on the command line, just replace any `_` with `-` e.g. `mac_address` becomes `--mac-address`.
 
@@ -79,7 +81,7 @@ The script accepts a number of commands:
 To move to a particular height you can run:
 
 ```
-idasen-controller --move-to 800
+linak-controller --move-to 800
 ```
 
 If you have configured favourite values in the `config.yaml` like this:
@@ -93,7 +95,7 @@ favourites:
 Then you can also pass the favourite name to the `--move-to` command:
 
 ```
-idasen-controller --move-to sit
+linak-controller --move-to sit
 ```
 
 ### Using the Server
@@ -105,31 +107,31 @@ Remember to ensure that the ports and IPs are configured in both the server and 
 You can start the server like this:
 
 ```
-idasen-controller --server
+linak-controller --server
 ```
 
 And then on the same or different device:
 
 ```
-idasen-controller --forward --move-to 800
+linak-controller --forward --move-to 800
 ```
 
 You can also use any of the favourites that are configured on the server:
 
 ```
-idasen-controller --forward --move-to stand
+linak-controller --forward --move-to stand
 ```
 
 There is also a simpler TCP server mode which allows you to send commands without needing a copy of the script on the client. You can start the tcp server with:
 
 ```
-idasen-controller --tcp-server
+linak-controller --tcp-server
 ```
 
 And then use any tool you like to send commands. For example you could use `nc` on linux:
 
 ```
-echo '{"move_to": 640}' | nc -w 1 127.0.0.1 9123
+echo '{"command": "move_to", "move_to": 640}' | nc -w 1 127.0.0.1 9123
 ```
 
 In this mode the client will not receive any height or speed values.
@@ -154,13 +156,13 @@ On MacOS the process may quit with a vague message like `abort`. This could be b
 
 ### Scanning and connection issues on MacOS 12 (Monterey)
 
-There was a bug with MacOS 12 that prevents connecting to bluetooth devices with this script [see this issue](https://github.com/rhyst/idasen-controller/issues/33) or [this bleak issue for more info](https://github.com/hbldh/bleak/issues/635#issuecomment-988054876).
+There was a bug with MacOS 12 that prevents connecting to bluetooth devices with this script [see this issue](https://github.com/rhyst/linak-controller/issues/33) or [this bleak issue for more info](https://github.com/hbldh/bleak/issues/635#issuecomment-988054876).
 
 You should update to MacOS 12.3 which fixes this issue.
 
 ## Recipes
 
-There is a page with a few examples of different ways to use the script: [RECIPES](RECIPES.md)
+There is a page with a few examples of different ways to use the script: [RECIPES](recipes/RECIPES.md)
 
 ## Development
 
@@ -173,7 +175,7 @@ poetry install
 Then you can run the script with:
 
 ```
-poetry run idasen_controller/main.py <command>
+poetry run python linak_controller.main <command>
 ```
 
 You can also install the project in editable/development mode with:

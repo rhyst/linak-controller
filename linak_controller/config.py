@@ -11,11 +11,6 @@ from appdirs import user_config_dir
 from typing import Optional
 from enum import Enum
 
-# Height of the desk at it's lowest (in mm)
-DEFAULT_BASE_HEIGHT = 620
-# And how high it can rise above that (same for all desks)
-DEFAULT_MOVEMENT_RANGE = 650
-
 
 class Commands(str, Enum):
     watch = "watch"
@@ -28,9 +23,7 @@ class Commands(str, Enum):
 class Config:
     # Config
     mac_address: Optional[str] = None
-    base_height: int = DEFAULT_BASE_HEIGHT
-    max_height: int = DEFAULT_BASE_HEIGHT + DEFAULT_MOVEMENT_RANGE
-    movement_range: int = DEFAULT_MOVEMENT_RANGE
+    base_height: Optional[int] = None
     adapter_name: str = "hci0"
     scan_timeout: int = 5
     connection_timeout: int = 10
@@ -48,16 +41,22 @@ class Config:
     disconnecting: bool = False
 
     def __init__(self):
-        DEFAULT_CONFIG_DIR = user_config_dir("idasen-controller")
+        OLD_CONFIG_DIR = user_config_dir("idasen-controller")
+        OLD_CONFIG_PATH = os.path.join(OLD_CONFIG_DIR, "config.yaml")
+
+        DEFAULT_CONFIG_DIR = user_config_dir("linak-controller")
         DEFAULT_CONFIG_PATH = os.path.join(DEFAULT_CONFIG_DIR, "config.yaml")
 
         # Default config
         if not os.path.isfile(DEFAULT_CONFIG_PATH):
             os.makedirs(os.path.dirname(DEFAULT_CONFIG_PATH), exist_ok=True)
-            shutil.copyfile(
-                os.path.join(os.path.dirname(__file__), "example", "config.yaml"),
-                DEFAULT_CONFIG_PATH,
-            )
+            if os.path.isfile(OLD_CONFIG_PATH):
+                shutil.copyfile(OLD_CONFIG_PATH, DEFAULT_CONFIG_PATH)
+            else:
+                shutil.copyfile(
+                    os.path.join(os.path.dirname(__file__), "example", "config.yaml"),
+                    DEFAULT_CONFIG_PATH,
+                )
 
         parser = argparse.ArgumentParser(description="")
 
@@ -74,12 +73,6 @@ class Config:
             dest="base_height",
             type=int,
             help="The height of tabletop above ground at lowest position (mm)",
-        )
-        parser.add_argument(
-            "--movement-range",
-            dest="movement_range",
-            type=int,
-            help="How far above base-height the desk can extend (mm)",
         )
         parser.add_argument(
             "--adapter",
@@ -172,7 +165,6 @@ class Config:
             help="Run as a simple TCP server to accept forwarded commands",
         )
 
-
         args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
 
         if args.get("move_to"):
@@ -198,9 +190,6 @@ class Config:
         for key in args:
             setattr(self, key, args[key])
 
-        # recompute base and max height
-        self.max_height = self.base_height + self.movement_range
-
         if not self.mac_address:
             parser.error("Mac address must be provided")
 
@@ -214,5 +203,6 @@ class Config:
 
     def log(self, message, end="\n"):
         print(message, end=end)
+
 
 config = Config()

@@ -21,33 +21,34 @@ class Desk:
     @classmethod
     async def initialise(cls, client: BleakClient) -> None:
         # Read capabilities
-        capabilities =  cls.decode_capabilities(await DPGService.dpg_command(client, DPGService.DPG.CMD_GET_CAPABILITIES))
+        capabilities = cls.decode_capabilities(
+            await DPGService.dpg_command(client, DPGService.DPG.CMD_GET_CAPABILITIES)
+        )
         print("Capabilities: {}".format(capabilities))
 
         # Read the user id
-        user_id = (await DPGService.dpg_command(client, DPGService.DPG.CMD_USER_ID))
+        user_id = await DPGService.dpg_command(client, DPGService.DPG.CMD_USER_ID)
         print("User ID: {}".format(bytes_to_hex(user_id)))
         if user_id and user_id[0] != 1:
-            # Set user_id to more privileged
+            # For DPG1C it is important that the first byte is set to 1
+            # The other bytes do not seem to matter
             user_id[0] = 1
             print("Setting user ID to {}".format(bytes_to_hex(user_id)))
             await DPGService.dpg_command(client, DPGService.DPG.CMD_USER_ID, user_id)
 
         # Check if base height should be taken from controller
-        if config.base_height == 0:
-            resp = (await DPGService.dpg_command(client, DPGService.DPG.CMD_BASE_OFFSET))
+        if config.base_height == None:
+            resp = await DPGService.dpg_command(client, DPGService.DPG.CMD_BASE_OFFSET)
             if resp:
-                base_height = struct.unpack("<H", resp[1:])[0]
-                print("base_height taken from controller {}".format(base_height))
-                config.base_height = base_height/10
-                config.max_height = config.base_height + config.movement_range
-
-
+                base_height = struct.unpack("<H", resp[1:])[0] / 10
+                print("Base height from desk: {:4.0f}mm".format(base_height))
+                config.base_height = base_height
 
     @classmethod
     async def wakeup(cls, client: BleakClient) -> None:
-        await ControlService.COMMAND.write_command(client, ControlService.COMMAND.CMD_WAKEUP)
-
+        await ControlService.COMMAND.write_command(
+            client, ControlService.COMMAND.CMD_WAKEUP
+        )
 
     @classmethod
     async def move_to(cls, client: BleakClient, target: Height) -> None:
@@ -90,7 +91,9 @@ class Desk:
     @classmethod
     async def stop(cls, client: BleakClient) -> None:
         try:
-            await ControlService.COMMAND.write_command(client, ControlService.COMMAND.CMD_STOP)
+            await ControlService.COMMAND.write_command(
+                client, ControlService.COMMAND.CMD_STOP
+            )
         except BleakDBusError as e:
             # Harmless exception that happens on Raspberry Pis
             # bleak.exc.BleakDBusError: [org.bluez.Error.NotPermitted] Write acquired
@@ -108,5 +111,5 @@ class Desk:
             "autoDown": (capByte & 16) != 0,
             "bleAllow": (capByte & 32) != 0,
             "hasDisplay": (capByte & 64) != 0,
-            "hasLight": (capByte & 128) != 0
+            "hasLight": (capByte & 128) != 0,
         }

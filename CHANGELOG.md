@@ -2,11 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.1.0] - Unreleased
+## [1.0.2] - 2023-10-31
+
+### Changed
+
+- Copy config from old config location if it exists and new one does not.
+
+### Fixed
+
+- Swapped `|` operator for `Union` in `gatt.py` to fix python 3.8 compatibility
+
+## [1.0.1] - 2023-10-31
+
+### Changed
+
+- Added `idasen-controller` as a script to maintain some backwards compatibility.
+
+## [1.0.0] - 2023-10-31
+
+Rename `idasen-controller` to `linak-controller`.
+
+---
+
+This package was previously named `idasen-controller`
+
+## [2.2.0] - 2023-10-31
+
+Final release of `idasen-controller` to point at renamed packaged `linak-controller`.
+
+## [2.1.0] - 2023-10-31
 
 ### Added
 
-- Add setting a user ID on first connection
+- Add setting a user ID on first connection to support DPG1C and DPG1M
+- Allow fetching base height from desk by setting config value to null
 
 ### Changed
 
@@ -14,6 +43,8 @@ All notable changes to this project will be documented in this file.
 - Bleak updated to 0.21.1
 - Refactor into seperate files and helper classes
 - Removed `print-exceptions` option
+- Removed max height option as it was unused
+- Removed movement range option as it was unused
 
 ## [2.0.2] - 2023-03-13
 

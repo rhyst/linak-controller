@@ -85,7 +85,7 @@ async def run_command(client: BleakClient):
             config.log(
                 f"Moving to favourite height: {config.move_to} ({target.human} mm)"
             )
-        elif config.move_to.isnumeric():
+        elif str(config.move_to).isnumeric():
             target = Height(int(config.move_to), True)
             config.log(f"Moving to height: {config.move_to}")
         else:
