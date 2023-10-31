@@ -175,7 +175,7 @@ poetry install
 Then you can run the script with:
 
 ```
-poetry run python linak_controller.main <command>
+poetry run python -m linak_controller.main <command>
 ```
 
 You can also install the project in editable/development mode with:
