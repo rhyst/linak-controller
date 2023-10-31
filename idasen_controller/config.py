@@ -22,7 +22,7 @@ class Commands(str, Enum):
 class Config:
     # Config
     mac_address: Optional[str] = None
-    base_height: int = DEFAULT_BASE_HEIGHT
+    base_height: Optional[int] = None
     adapter_name: str = "hci0"
     scan_timeout: int = 5
     connection_timeout: int = 10

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Add setting a user ID on first connection
+- Allow fetching base height from desk by setting config value to null
 
 ### Changed
 
