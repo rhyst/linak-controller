@@ -100,46 +100,4 @@ These are shortcut files on the desktop but it's not necessary and could be simp
 
 ## Docker
 
-You can run the script from within a docker file like this example:
-
-```
-FROM ubuntu
-
-RUN apt update -y && apt upgrade -y
-
-RUN apt install python3 python3-pip -y
-
-ENV TZ=Europe/London
-
-RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
-
-RUN apt install bluez -y
-
-RUN apt install build-essential libglib2.0-dev libical-dev libreadline-dev libudev-dev libdbus-1-dev libdbus-glib-1-dev bluetooth libbluetooth-dev usbutils -y
-
-RUN pip3 install linak-controller
-
-COPY config.yaml .
-
-ENTRYPOINT ["linak-contoller", "--config", "config.yaml"]
-```
-
-Build the image:
-
-```
-docker build -t linak-controller .
-```
-
-And then run it with the usual commands:
-
-```
-docker run -it --rm --privileged \
-    --cap-add=SYS_ADMIN \
-    --cap-add=NET_ADMIN \
-    --net=host \
-    -v /dev/bus/usb:/dev/bus/usb \
-    -v /var/run/dbus:/var/run/dbus \
-    linak-controller --watch
-```
-
-From @maxime1992
+In the docker directory is a `docker-compose.yml` file that will run the linak-controller in server mode with `docker compose up -d`.

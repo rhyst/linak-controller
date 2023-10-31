@@ -1,0 +1,19 @@
+# Do `sudo killall -9 bluetoothd` on your host before starting.
+
+version: '3'
+services:
+  linakcontroller:
+    build: ../..
+    restart: always
+
+    volumes:
+      # your configuration file:
+      - "./data/config.yaml:/app/config.yaml:ro"
+      # remember paired bluetooth devices:
+      - "./data/bluetooth/:/var/lib/bluetooth/:rw"
+
+    # required for bluetooth:
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
