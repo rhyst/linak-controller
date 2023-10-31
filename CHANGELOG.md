@@ -2,11 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.1.0] - Unreleased
+## [2.1.0] - 2023-10-31
 
 ### Added
 
-- Add setting a user ID on first connection
+- Add setting a user ID on first connection to support DPG1C and DPG1M
 - Allow fetching base height from desk by setting config value to null
 
 ### Changed

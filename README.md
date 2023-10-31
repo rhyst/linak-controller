@@ -9,14 +9,15 @@ Note: This script may work with other Linak desks but it is not guaranteed - see
 ### Prerequisites
 
 - Windows / Linux / Mac
-- The device should have Python 3 (the script has been tested down to 3.7.3)
+- The device should have Python 3
 - The desk should be paired to the device.
 
 ### Working Desks
 
-- Ikea Idasen - the only desk I can confidently say works because I have one
-- iMovr Lander - reportedly works because it is the same as an Idasen Desk [43](https://github.com/rhyst/idasen-controller/issues/43)
-- Linak DPG1C - Sporadic success reported with this device (help from anyone with this appreciated) [32](https://github.com/rhyst/idasen-controller/issues/32)
+- Ikea Idasen - works (my desk!)
+- iMovr Lander - reported working [43](https://github.com/rhyst/idasen-controller/issues/43)
+- Linak DPG1C - reporteded working [32](https://github.com/rhyst/idasen-controller/issues/32)
+- Linak DPG1M - reporteded working [32](https://github.com/rhyst/idasen-controller/issues/32)
 
 If you find another desk model that works please make an issue to report it!
 
