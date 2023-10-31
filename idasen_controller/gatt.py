@@ -178,6 +178,7 @@ class DPGDPGCharacteristic(Characteristic):
         buffer = header + buffer
         await cls.write(client, buffer)
 
+
 class DPGService(Service):
     uuid = "99fa0010-338a-1024-8a49-009c0215f78a"
 
@@ -207,4 +208,3 @@ class DPGService(Service):
                 return data[2:]
             else:
                 return None
-

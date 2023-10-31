@@ -11,6 +11,7 @@ from appdirs import user_config_dir
 from typing import Optional
 from enum import Enum
 
+
 class Commands(str, Enum):
     watch = "watch"
     move_to = "move_to"
@@ -158,7 +159,6 @@ class Config:
             help="Run as a simple TCP server to accept forwarded commands",
         )
 
-
         args = {k: v for k, v in vars(parser.parse_args()).items() if v is not None}
 
         if args.get("move_to"):
@@ -197,5 +197,6 @@ class Config:
 
     def log(self, message, end="\n"):
         print(message, end=end)
+
 
 config = Config()
