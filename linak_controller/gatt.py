@@ -5,7 +5,7 @@ Low level helper classes to organise methods for interacting with the GATT servi
 import struct
 from bleak import BleakClient
 import asyncio
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from .util import Height, Speed, make_iter
 from .config import config
 
@@ -77,7 +77,7 @@ class ReferenceInputService(Service):
     ONE = ReferenceInputOneCharacteristic
 
     @classmethod
-    def encode_height(cls, height: int | str) -> bytearray:
+    def encode_height(cls, height: Union[int, str]) -> bytearray:
         return bytearray(struct.pack("<H", int(height)))
 
     @classmethod
