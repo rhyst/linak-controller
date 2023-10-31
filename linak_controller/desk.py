@@ -63,7 +63,7 @@ class Desk:
 
         while True:
             await ReferenceInputService.ONE.write(client, data)
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.4)
             height, speed = await ReferenceOutputService.get_height_speed(client)
             if speed.value == 0:
                 break
