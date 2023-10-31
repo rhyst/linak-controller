@@ -129,7 +129,7 @@ idasen-controller --tcp-server
 And then use any tool you like to send commands. For example you could use `nc` on linux:
 
 ```
-echo '{"move_to": 640}' | nc -w 1 127.0.0.1 9123
+echo '{"command": "move_to", "move_to": 640}' | nc -w 1 127.0.0.1 9123
 ```
 
 In this mode the client will not receive any height or speed values.
