@@ -85,7 +85,7 @@ async def run_command(client: BleakClient):
             config.log(
                 f"Moving to favourite height: {config.move_to} ({target.human} mm)"
             )
-        elif config.move_to.isnumeric():
+        elif str(config.move_to).isnumeric():
             target = Height(int(config.move_to), True)
             config.log(f"Moving to height: {config.move_to}")
         else:
@@ -124,6 +124,7 @@ async def run_tcp_forwarded_command(client, reader, writer):
     forwarded_config = json.loads(str(request))
     for key in forwarded_config:
         setattr(config, key, forwarded_config[key])
+    config.command = Commands.move_to
     await run_command(client)
     writer.close()
 
