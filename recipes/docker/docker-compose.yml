@@ -3,7 +3,9 @@
 version: '3'
 services:
   linakcontroller:
-    build: ../..
+    build:
+      context: ../..
+      dockerfile: recipes/docker/Dockerfile
     restart: always
 
     volumes:
