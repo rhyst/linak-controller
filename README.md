@@ -159,7 +159,7 @@ You should update to MacOS 12.3 which fixes this issue.
 
 ## Recipes
 
-There is a page with a few examples of different ways to use the script: [RECIPES](RECIPES.md)
+There is a page with a few examples of different ways to use the script: [RECIPES](recipes/RECIPES.md)
 
 ## Development
 
