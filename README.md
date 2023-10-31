@@ -1,8 +1,10 @@
-# idasen-controller
+# linak-controller
 
-The Idasen is a Linak standing desk sold by Ikea. It can be controlled by a physical switch on the desk or via bluetooth using an phone app. This is a script to control the Idasen via bluetooth from any other device.
+(Previously `idasen-controller`)
 
-Note: This script may work with other Linak desks but it is not guaranteed - see below
+Linak make motorised standing desks. They can be controlled by a physical switch on the desks or via bluetooth using an phone app. This is a script to control Linak desks via bluetooth from any other device.
+
+Note: This script may not work with all Linak desks - see below for comaptible models.
 
 ## Set up
 
@@ -15,9 +17,9 @@ Note: This script may work with other Linak desks but it is not guaranteed - see
 ### Working Desks
 
 - Ikea Idasen - works (my desk!)
-- iMovr Lander - reported working [43](https://github.com/rhyst/idasen-controller/issues/43)
-- Linak DPG1C - reported working [32](https://github.com/rhyst/idasen-controller/issues/32)
-- Linak DPG1M - reported working [32](https://github.com/rhyst/idasen-controller/issues/32)
+- iMovr Lander - reported working [43](https://github.com/rhyst/linak-controller/issues/43)
+- Linak DPG1C - reported working [32](https://github.com/rhyst/linak-controller/issues/32)
+- Linak DPG1M - reported working [32](https://github.com/rhyst/linak-controller/issues/32)
 
 If you find another desk model that works please make an issue to report it!
 
@@ -26,16 +28,16 @@ If you find another desk model that works please make an issue to report it!
 Install using pip:
 
 ```
-pip3 install idasen-controller
+pip3 install linak-controller
 ```
 
 ### Configuration
 
 Configuration can be provided with a file, or via command line arguments. Use `--help` to see the command line arguments help. Edit `<config_dir>/config.yaml` if you prefer your config to be in a file. `<config_dir>` is normally:
 
-- `~/.config/idasen-controller` on Linux
-- `C:\Users\<user>\AppData\Local\idasen-controller\idasen-controller` on Windows
-- `~/Library/Application Support/idasen-controller` on MacOS
+- `~/.config/linak-controller` on Linux
+- `C:\Users\<user>\AppData\Local\linak-controller\linak-controller` on Windows
+- `~/Library/Application Support/linak-controller` on MacOS
 
 Config options:
 
@@ -79,7 +81,7 @@ The script accepts a number of commands:
 To move to a particular height you can run:
 
 ```
-idasen-controller --move-to 800
+linak-controller --move-to 800
 ```
 
 If you have configured favourite values in the `config.yaml` like this:
@@ -93,7 +95,7 @@ favourites:
 Then you can also pass the favourite name to the `--move-to` command:
 
 ```
-idasen-controller --move-to sit
+linak-controller --move-to sit
 ```
 
 ### Using the Server
@@ -105,25 +107,25 @@ Remember to ensure that the ports and IPs are configured in both the server and 
 You can start the server like this:
 
 ```
-idasen-controller --server
+linak-controller --server
 ```
 
 And then on the same or different device:
 
 ```
-idasen-controller --forward --move-to 800
+linak-controller --forward --move-to 800
 ```
 
 You can also use any of the favourites that are configured on the server:
 
 ```
-idasen-controller --forward --move-to stand
+linak-controller --forward --move-to stand
 ```
 
 There is also a simpler TCP server mode which allows you to send commands without needing a copy of the script on the client. You can start the tcp server with:
 
 ```
-idasen-controller --tcp-server
+linak-controller --tcp-server
 ```
 
 And then use any tool you like to send commands. For example you could use `nc` on linux:
@@ -154,7 +156,7 @@ On MacOS the process may quit with a vague message like `abort`. This could be b
 
 ### Scanning and connection issues on MacOS 12 (Monterey)
 
-There was a bug with MacOS 12 that prevents connecting to bluetooth devices with this script [see this issue](https://github.com/rhyst/idasen-controller/issues/33) or [this bleak issue for more info](https://github.com/hbldh/bleak/issues/635#issuecomment-988054876).
+There was a bug with MacOS 12 that prevents connecting to bluetooth devices with this script [see this issue](https://github.com/rhyst/linak-controller/issues/33) or [this bleak issue for more info](https://github.com/hbldh/bleak/issues/635#issuecomment-988054876).
 
 You should update to MacOS 12.3 which fixes this issue.
 
@@ -173,7 +175,7 @@ poetry install
 Then you can run the script with:
 
 ```
-poetry run python idasen_controller.main <command>
+poetry run python linak_controller.main <command>
 ```
 
 You can also install the project in editable/development mode with:

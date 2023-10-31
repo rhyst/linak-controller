@@ -41,7 +41,7 @@ class Config:
     disconnecting: bool = False
 
     def __init__(self):
-        DEFAULT_CONFIG_DIR = user_config_dir("idasen-controller")
+        DEFAULT_CONFIG_DIR = user_config_dir("linak-controller")
         DEFAULT_CONFIG_PATH = os.path.join(DEFAULT_CONFIG_DIR, "config.yaml")
 
         # Default config

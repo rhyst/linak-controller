@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] 2023-10-31
+
+Rename `idasen-controller` to `linak-controller`.
+
+---
+
+This package was previously named `idasen-controller`
+
 ## [2.2.0] - 2023-10-31
 
 Final release of `idasen-controller` to point at renamed packaged `linak-controller`.
