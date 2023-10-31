@@ -41,16 +41,22 @@ class Config:
     disconnecting: bool = False
 
     def __init__(self):
+        OLD_CONFIG_DIR = user_config_dir("idasen-controller")
+        OLD_CONFIG_PATH = os.path.join(OLD_CONFIG_DIR, "config.yaml")
+
         DEFAULT_CONFIG_DIR = user_config_dir("linak-controller")
         DEFAULT_CONFIG_PATH = os.path.join(DEFAULT_CONFIG_DIR, "config.yaml")
 
         # Default config
         if not os.path.isfile(DEFAULT_CONFIG_PATH):
             os.makedirs(os.path.dirname(DEFAULT_CONFIG_PATH), exist_ok=True)
-            shutil.copyfile(
-                os.path.join(os.path.dirname(__file__), "example", "config.yaml"),
-                DEFAULT_CONFIG_PATH,
-            )
+            if os.path.isfile(OLD_CONFIG_PATH):
+                shutil.copyfile(OLD_CONFIG_PATH, DEFAULT_CONFIG_PATH)
+            else:
+                shutil.copyfile(
+                    os.path.join(os.path.dirname(__file__), "example", "config.yaml"),
+                    DEFAULT_CONFIG_PATH,
+                )
 
         parser = argparse.ArgumentParser(description="")
 
