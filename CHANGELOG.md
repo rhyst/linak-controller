@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.0] 2023-10-31
+## [1.0.1] - 2023-10-31
+
+### Changed
+
+- Added `idasen-controller` as a script to maintain some backwards compatibility.
+
+## [1.0.0] - 2023-10-31
 
 Rename `idasen-controller` to `linak-controller`.
 

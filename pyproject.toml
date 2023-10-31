@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "linak-controller"
-version = "1.0.0"
+version = "1.0.1"
 description = "Command line tool for controlling the Linak standing desks"
 authors = ["Rhys Tyers"]
 license = "MIT"
@@ -14,6 +14,7 @@ PyYAML = "^6.0"
 
 [tool.poetry.scripts]
 linak-controller = 'linak_controller.main:init'
+idasen-controller = 'linak_controller.main:init'
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.10.1"
