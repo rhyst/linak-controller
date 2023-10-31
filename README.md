@@ -173,7 +173,7 @@ poetry install
 Then you can run the script with:
 
 ```
-poetry run idasen_controller/main.py <command>
+poetry run python -m idasen_controller.main <command>
 ```
 
 You can also install the project in editable/development mode with:
