@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - 2023-10-31
+
+### Changed
+
+- Copy config from old config location if it exists and new one does not.
+
+### Fixed
+
+- Swapped `|` operator for `Union` in `gatt.py` to fix python 3.8 compatibility
+
 ## [1.0.1] - 2023-10-31
 
 ### Changed
