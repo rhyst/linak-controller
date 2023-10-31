@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Python version changed to >=3.8 <3.13 to satisfy dependencies
+- Python version changed to >=3.10 <3.13 to satisfy dependencies
 - Bleak updated to 0.21.1
 - Refactor into seperate files and helper classes
 - Removed `print-exceptions` option
