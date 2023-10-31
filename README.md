@@ -42,7 +42,6 @@ Config options:
 | -------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | `mac_address`        | The MAC address (or UUID on MacOS) of the desk. This is required.                            |                                                      |
 | `base_height`        | The lowest possible height (mm) of the desk top from the floor.                              | `620`.                                               |
-| `movement_range`     | How far above base height the desk can extend (mm).                                          | `650`.                                               |
 | `adapter_name`       | The adapter name for the bluetooth adapter to use for the connection (Linux only).           | `hci0`                                               |
 | `scan_timeout`       | Timeout to scan for the device (seconds).                                                    | `5`                                                  |
 | `connection_timeout` | Timeout to obtain connection (seconds).                                                      | `10`                                                 |

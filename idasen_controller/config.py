@@ -11,12 +11,6 @@ from appdirs import user_config_dir
 from typing import Optional
 from enum import Enum
 
-# Height of the desk at it's lowest (in mm)
-DEFAULT_BASE_HEIGHT = 620
-# And how high it can rise above that (same for all desks)
-DEFAULT_MOVEMENT_RANGE = 650
-
-
 class Commands(str, Enum):
     watch = "watch"
     move_to = "move_to"
@@ -29,8 +23,6 @@ class Config:
     # Config
     mac_address: Optional[str] = None
     base_height: int = DEFAULT_BASE_HEIGHT
-    max_height: int = DEFAULT_BASE_HEIGHT + DEFAULT_MOVEMENT_RANGE
-    movement_range: int = DEFAULT_MOVEMENT_RANGE
     adapter_name: str = "hci0"
     scan_timeout: int = 5
     connection_timeout: int = 10
@@ -74,12 +66,6 @@ class Config:
             dest="base_height",
             type=int,
             help="The height of tabletop above ground at lowest position (mm)",
-        )
-        parser.add_argument(
-            "--movement-range",
-            dest="movement_range",
-            type=int,
-            help="How far above base-height the desk can extend (mm)",
         )
         parser.add_argument(
             "--adapter",
@@ -197,9 +183,6 @@ class Config:
         # Overwrite config from command line args
         for key in args:
             setattr(self, key, args[key])
-
-        # recompute base and max height
-        self.max_height = self.base_height + self.movement_range
 
         if not self.mac_address:
             parser.error("Mac address must be provided")

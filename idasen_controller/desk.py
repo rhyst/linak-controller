@@ -40,7 +40,6 @@ class Desk:
                 base_height = struct.unpack("<H", resp[1:])[0]
                 print("base_height taken from controller {}".format(base_height))
                 config.base_height = base_height/10
-                config.max_height = config.base_height + config.movement_range
 
 
 

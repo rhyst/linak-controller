@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 - Bleak updated to 0.21.1
 - Refactor into seperate files and helper classes
 - Removed `print-exceptions` option
+- Removed max height option as it was unused
+- Removed movement range option as it was unused
 
 ## [2.0.2] - 2023-03-13
 
