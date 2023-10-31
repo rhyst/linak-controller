@@ -9,10 +9,10 @@ RUN apt-get update && \
     apt-get install -y bluez bluetooth
 RUN pip install poetry
 
-# idasen-controller dependencies:
+# linak-controller dependencies:
 COPY poetry.lock pyproject.toml ./
 RUN poetry install
 
 COPY ./ ./
 
-ENTRYPOINT sh docker_entrypoint.sh
+ENTRYPOINT ["sh", "recipes/docker/docker_entrypoint.sh"]
