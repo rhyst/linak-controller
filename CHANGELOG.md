@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2023-10-31
+
+### Added
+
+- Docker recipe by @voruti
+
+### Fixed
+
+- Fixed stuttering issues [48](https://github.com/rhyst/linak-controller/issues/48) by @tomsb
+
 ## [1.0.2] - 2023-10-31
 
 ### Changed
 
-- Copy config from old config location if it exists and new one does not.
+- Copy config from old config location if it exists and new one does not
 
 ### Fixed
 
@@ -16,7 +26,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Added `idasen-controller` as a script to maintain some backwards compatibility.
+- Added `idasen-controller` as a script to maintain some backwards compatibility
 
 ## [1.0.0] - 2023-10-31
 
