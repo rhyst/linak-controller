@@ -41,16 +41,17 @@ Configuration can be provided with a file, or via command line arguments. Use `-
 
 Config options:
 
-| Option               | Description                                                                                           | Default                     |
-| -------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------- |
-| `mac_address`        | The MAC address (or UUID on MacOS) of the desk. This is required.                                     |                             |
-| `base_height`        | The lowest possible height (mm) of the desk top from the floor By default this is read from the desk. | `null`.                     |
-| `adapter_name`       | The adapter name for the bluetooth adapter to use for the connection (Linux only).                    | `hci0`                      |
-| `scan_timeout`       | Timeout to scan for the device (seconds).                                                             | `5`                         |
-| `connection_timeout` | Timeout to obtain connection (seconds).                                                               | `10`                        |
-| `server_address`     | The address the server should run at (if running server).                                             | `127.0.0.1`                 |
-| `server_port`        | The port the server should run on (if running server).                                                | `9123`                      |
-| `favourites`         | Favourite heights object where the key is the name and the value is the height                        | `{ sit: 683, stand: 1040 }` |
+| Option                | Description                                                                                           | Default                     |
+| --------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------- |
+| `mac_address`         | The MAC address (or UUID on MacOS) of the desk. This is required.                                     |                             |
+| `base_height`         | The lowest possible height (mm) of the desk top from the floor By default this is read from the desk. | `null`.                     |
+| `adapter_name`        | The adapter name for the bluetooth adapter to use for the connection (Linux only).                    | `hci0`                      |
+| `scan_timeout`        | Timeout to scan for the device (seconds).                                                             | `5`                         |
+| `connection_timeout`  | Timeout to obtain connection (seconds).                                                               | `10`                        |
+| `move_command_period` | Time between move commands when using `move-to` (seconds).                                            | `0.4`                       |
+| `server_address`      | The address the server should run at (if running server).                                             | `127.0.0.1`                 |
+| `server_port`         | The port the server should run on (if running server).                                                | `9123`                      |
+| `favourites`          | Favourite heights object where the key is the name and the value is the height                        | `{ sit: 683, stand: 1040 }` |
 
 All of these options (except `favourites`) can be set on the command line, just replace any `_` with `-` e.g. `mac_address` becomes `--mac-address`.
 
@@ -158,6 +159,10 @@ On MacOS the process may quit with a vague message like `abort`. This could be b
 There was a bug with MacOS 12 that prevents connecting to bluetooth devices with this script [see this issue](https://github.com/rhyst/linak-controller/issues/33) or [this bleak issue for more info](https://github.com/hbldh/bleak/issues/635#issuecomment-988054876).
 
 You should update to MacOS 12.3 which fixes this issue.
+
+### Desk movement stuttering
+
+Try lowering the `move_command_period` config value.
 
 ## Recipes
 

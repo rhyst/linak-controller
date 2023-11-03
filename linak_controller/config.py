@@ -32,6 +32,8 @@ class Config:
     favourites: dict = {}
     forward: bool = False
     move_to: Optional[str] = None
+    move_command_period: float = 0.4
+
 
     # Command
     command: Commands = None
@@ -92,7 +94,10 @@ class Config:
             help="The timeout for bluetooth connection (seconds)",
         )
         parser.add_argument(
+            "--move-command-period",
+            dest="move_command_period",
             type=int,
+            help="The period between each move command (seconds)",
         )
         parser.add_argument(
             "--forward",
