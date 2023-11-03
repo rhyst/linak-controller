@@ -93,7 +93,7 @@ class ReferenceInputService(Service):
 
         while True:
             await cls.ONE.write(client, data)
-            await asyncio.sleep(0.4)
+            await asyncio.sleep(0.3)
             height, speed = await ReferenceOutputService.get_height_speed(client)
             if speed.value == 0:
                 break
