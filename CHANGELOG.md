@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [1.1.0] - 2023-11-03
+
+### Added
+
+- Configurable move command period (relating to [48](https://github.com/rhyst/linak-controller/issues/48))
+
+### Changed
+
+- Removed redundant move timeout config
+- 
 ## [1.0.3] - 2023-11-01
 
 ### Added
