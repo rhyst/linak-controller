@@ -48,7 +48,6 @@ Config options:
 | `adapter_name`       | The adapter name for the bluetooth adapter to use for the connection (Linux only).                    | `hci0`                      |
 | `scan_timeout`       | Timeout to scan for the device (seconds).                                                             | `5`                         |
 | `connection_timeout` | Timeout to obtain connection (seconds).                                                               | `10`                        |
-| `movement_timeout`   | Timeout for waiting for the desk to reach the specified height (seconds).                             | `30`                        |
 | `server_address`     | The address the server should run at (if running server).                                             | `127.0.0.1`                 |
 | `server_port`        | The port the server should run on (if running server).                                                | `9123`                      |
 | `favourites`         | Favourite heights object where the key is the name and the value is the height                        | `{ sit: 683, stand: 1040 }` |

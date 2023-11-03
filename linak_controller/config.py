@@ -27,7 +27,6 @@ class Config:
     adapter_name: str = "hci0"
     scan_timeout: int = 5
     connection_timeout: int = 10
-    movement_timeout: int = 30
     server_address: str = "127.0.0.1"
     server_port: int = 9123
     favourites: dict = {}
@@ -93,10 +92,7 @@ class Config:
             help="The timeout for bluetooth connection (seconds)",
         )
         parser.add_argument(
-            "--movement-timeout",
-            dest="movement_timeout",
             type=int,
-            help="The timeout for waiting for the desk to reach the specified height (seconds)",
         )
         parser.add_argument(
             "--forward",
