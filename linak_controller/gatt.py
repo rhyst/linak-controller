@@ -80,28 +80,6 @@ class ReferenceInputService(Service):
     def encode_height(cls, height: Union[int, str]) -> bytearray:
         return bytearray(struct.pack("<H", int(height)))
 
-    @classmethod
-    async def move_to(cls, client: BleakClient, target: Height) -> None:
-        initial_height, speed = await ReferenceOutputService.get_height_speed(client)
-        if initial_height.value == target.value:
-            return
-
-        await ControlService.wakeup(client)
-        await ControlService.stop(client)
-
-        data = cls.encode_height(target.value)
-
-        while True:
-            await cls.ONE.write(client, data)
-            await asyncio.sleep(0.4)
-            height, speed = await ReferenceOutputService.get_height_speed(client)
-            if speed.value == 0:
-                break
-            config.log(
-                "Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(height.human, speed.human)
-            )
-
-
 # Reference Output
 
 
