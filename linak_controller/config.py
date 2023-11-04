@@ -96,7 +96,7 @@ class Config:
         parser.add_argument(
             "--move-command-period",
             dest="move_command_period",
-            type=int,
+            type=float,
             help="The period between each move command (seconds)",
         )
         parser.add_argument(
