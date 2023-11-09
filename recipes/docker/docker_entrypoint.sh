@@ -6,4 +6,4 @@ bluetoothd &
 
 /bin/bash
 
-poetry run python -m linak_controller.main --config config.yaml --tcp-server
+poetry run python -m linak_controller.main --config config.yaml --server

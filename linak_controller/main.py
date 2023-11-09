@@ -10,6 +10,7 @@ from functools import partial
 from .config import config, Commands
 from .util import Height
 from .desk import Desk
+from .restapi import RestApi
 
 
 async def scan():
@@ -129,9 +130,16 @@ async def run_tcp_forwarded_command(client, reader, writer):
 
 
 async def run_server(client: BleakClient):
-    """Start a server to listen for commands via websocket connection"""
+    """Start a server to listen for commands via RESTful API and websocket connection"""
     app = web.Application()
-    app.router.add_get("/", partial(run_forwarded_command, client))
+    router = app.router
+
+    # websocket:
+    router.add_get("/", partial(run_forwarded_command, client))
+
+    # RESTful endpoints:
+    RestApi(client, router)
+
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, config.server_address, config.server_port)
