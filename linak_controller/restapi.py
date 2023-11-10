@@ -22,8 +22,8 @@ class RestApi:
         router.add_post("/rest/desk", self.post_desk)
         router.add_get("/rest/desk/height", self.get_desk_height)
         router.add_post("/rest/desk/height", self.post_desk_height)
+        router.add_post("/rest/desk/height/favourite", self.post_desk_height_favourite)
         router.add_get("/rest/desk/speed", self.get_desk_speed)
-        router.add_post("/rest/desk/favourite", self.post_desk_favourite)
 
     @property
     def client(self):
@@ -63,15 +63,7 @@ class RestApi:
 
         return await self.common_post_height(await request.text())
 
-    async def get_desk_speed(self, _):
-        _, current_speed = await Desk.get_height_speed(self.client)
-
-        return web.Response(
-            text='{:.0f}'.format(current_speed.human),
-            content_type="text/plain"
-        )
-
-    async def post_desk_favourite(self, request: web.Request):
+    async def post_desk_height_favourite(self, request: web.Request):
         if (not request.body_exists) or (not request.can_read_body):
             return web.Response(status=400)
 
@@ -84,6 +76,14 @@ class RestApi:
             return web.Response(status=422)
 
         return await self.common_post_height(config.favourites.get(favourite_name))
+
+    async def get_desk_speed(self, _):
+        _, current_speed = await Desk.get_height_speed(self.client)
+
+        return web.Response(
+            text='{:.0f}'.format(current_speed.human),
+            content_type="text/plain"
+        )
 
 
     async def common_post_height(self, target_height):

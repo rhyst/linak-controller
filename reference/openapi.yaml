@@ -82,27 +82,13 @@ paths:
           description: Bad Request, syntax error, eg. missing request body
         '422':
           description: Unprocessable Entity, semantic error, eg. height is negative
-  /desk/speed:
-    get:
-      tags:
-        - desk
-      summary: Get the current speed of the desk
-      description: Get the current speed of the desk
-      operationId: get_desk_speed
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            text/plain:
-              schema:
-                $ref: '#/components/schemas/DeskSpeed'
-  /desk/favourite:
+  /desk/height/favourite:
     post:
       tags:
         - desk
       summary: Activate a favourite for the desk
       description: Activate a favourite for the desk. Move the desk to the height specified in the favourite.
-      operationId: post_desk_favourite
+      operationId: post_desk_height_favourite
       requestBody:
         content:
           text/plain:
@@ -121,6 +107,20 @@ paths:
           description: Bad Request, syntax error, eg. missing request body
         '422':
           description: Unprocessable Entity, semantic error, eg. favourite doesn't exist
+  /desk/speed:
+    get:
+      tags:
+        - desk
+      summary: Get the current speed of the desk
+      description: Get the current speed of the desk
+      operationId: get_desk_speed
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/DeskSpeed'
 components:
   schemas:
     DeskHeight:
