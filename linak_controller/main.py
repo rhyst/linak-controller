@@ -171,7 +171,7 @@ async def forward_command():
         print(f"Command must be one of {allowed_commands}")
         return
     config_dict = config.__dict__
-    allowed_keys = ["command", "move_to"]
+    allowed_keys = ["command", "move_to", "move_command_period"]
     forwarded_config = {
         key: config_dict[key] for key in allowed_keys if key in config_dict
     }
