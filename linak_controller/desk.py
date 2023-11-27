@@ -5,7 +5,7 @@ High level helper class to organise methods for performing actions with a Linak 
 import asyncio
 from bleak import BleakClient
 from bleak.exc import BleakDBusError
-from typing import Tuple
+from typing import Tuple, Callable
 from .gatt import (
     DPGService,
     ControlService,
@@ -76,16 +76,18 @@ class Desk:
         return await ReferenceOutputService.get_height_speed(client)
 
     @classmethod
-    async def watch_height_speed(cls, client: BleakClient) -> None:
+    async def watch_height_speed(cls, client: BleakClient, callback: Callable[[Height, Speed], None]=None) -> None:
         """Listen for height changes"""
 
-        def callback(sender, data):
+        def rawCallback(sender, data):
             height, speed = ReferenceOutputService.decode_height_speed(data)
             config.log(
                 "Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(height.human, speed.human)
             )
+            if callback is not None:
+                callback(height, speed)
 
-        await ReferenceOutputService.ONE.subscribe(client, callback)
+        await ReferenceOutputService.ONE.subscribe(client, rawCallback)
         await asyncio.Future()
 
     @classmethod

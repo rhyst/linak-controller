@@ -6,8 +6,9 @@ import asyncio
 import re
 from bleak import BleakClient
 from aiohttp import web
+from typing import Tuple
 from .desk import Desk
-from .util import Height
+from .util import Height, Speed
 from .config import config
 from json import JSONDecodeError
 
@@ -15,8 +16,12 @@ from json import JSONDecodeError
 class RestApi:
     favourite_name_pattern = re.compile("^[a-zA-Z0-9_-]+$")
 
+    currentHeight: Height = Height(0)
+    currentSpeed: Speed = Speed(0)
+
+
     def __init__(self, client: BleakClient, router):
-        self._client = client
+        self.client = client
 
         router.add_get("/rest/desk", self.get_desk)
         router.add_post("/rest/desk", self.post_desk)
@@ -25,13 +30,20 @@ class RestApi:
         router.add_post("/rest/desk/height/favourite", self.post_desk_height_favourite)
         router.add_get("/rest/desk/speed", self.get_desk_speed)
 
-    @property
-    def client(self):
-        return self._client
+        def callback(height, speed):
+            self.currentHeight = height
+            self.currentSpeed = speed
+        async def fetchInitialValues():
+            current_height, current_speed = await Desk.get_height_speed(client)
+            callback(current_height, current_speed)
+
+        loop = asyncio.get_running_loop()
+        loop.create_task(fetchInitialValues())
+        loop.create_task(Desk.watch_height_speed(client, callback))
 
 
-    async def get_desk(self, _):
-        current_height, current_speed = await Desk.get_height_speed(self.client)
+    def get_desk(self, _):
+        current_height, current_speed = self.common_get_from_desk()
 
         return web.Response(
             text='{{"height": {:.0f}, "speed": {:.0f}}}'.format(current_height.human, current_speed.human),
@@ -49,8 +61,8 @@ class RestApi:
 
         return await self.common_post_height(target_height)
 
-    async def get_desk_height(self, _):
-        current_height, _ = await Desk.get_height_speed(self.client)
+    def get_desk_height(self, _):
+        current_height, _ = self.common_get_from_desk()
 
         return web.Response(
             text='{:.0f}'.format(current_height.human),
@@ -77,14 +89,17 @@ class RestApi:
 
         return await self.common_post_height(config.favourites.get(favourite_name))
 
-    async def get_desk_speed(self, _):
-        _, current_speed = await Desk.get_height_speed(self.client)
+    def get_desk_speed(self, _):
+        _, current_speed = self.common_get_from_desk()
 
         return web.Response(
             text='{:.0f}'.format(current_speed.human),
             content_type="text/plain"
         )
 
+
+    def common_get_from_desk(self) -> Tuple[Height, Speed]:
+        return self.currentHeight, self.currentSpeed
 
     async def common_post_height(self, target_height):
         try:
