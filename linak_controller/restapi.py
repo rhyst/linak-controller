@@ -33,6 +33,7 @@ class RestApi:
         def callback(height, speed):
             self.currentHeight = height
             self.currentSpeed = speed
+
         async def fetchInitialValues():
             current_height, current_speed = await Desk.get_height_speed(client)
             callback(current_height, current_speed)
@@ -46,8 +47,10 @@ class RestApi:
         current_height, current_speed = self.common_get_from_desk()
 
         return web.Response(
-            text='{{"height": {:.0f}, "speed": {:.0f}}}'.format(current_height.human, current_speed.human),
-            content_type="application/json"
+            text='{{"height": {:.0f}, "speed": {:.0f}}}'.format(
+                current_height.human, current_speed.human
+            ),
+            content_type="application/json",
         )
 
     async def post_desk(self, request: web.Request):
@@ -55,7 +58,7 @@ class RestApi:
             return web.Response(status=400)
 
         try:
-            target_height = (await request.json())['height']
+            target_height = (await request.json())["height"]
         except (JSONDecodeError, KeyError):
             return web.Response(status=400)
 
@@ -65,8 +68,7 @@ class RestApi:
         current_height, _ = self.common_get_from_desk()
 
         return web.Response(
-            text='{:.0f}'.format(current_height.human),
-            content_type="text/plain"
+            text="{:.0f}".format(current_height.human), content_type="text/plain"
         )
 
     async def post_desk_height(self, request: web.Request):
@@ -93,8 +95,7 @@ class RestApi:
         _, current_speed = self.common_get_from_desk()
 
         return web.Response(
-            text='{:.0f}'.format(current_speed.human),
-            content_type="text/plain"
+            text="{:.0f}".format(current_speed.human), content_type="text/plain"
         )
 
 
