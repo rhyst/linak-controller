@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - Removed redundant move to method
 
+### Fixed
+
+- Configurable move command period should allow float [76](https://github.com/rhyst/linak-controller/pull/76) by @tomsb
+
 ## [1.1.0] - 2023-11-03
 
 ### Added
@@ -17,7 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Removed redundant move timeout config
-- 
+
 ## [1.0.3] - 2023-11-01
 
 ### Added
