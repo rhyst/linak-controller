@@ -186,6 +186,7 @@ class DPGService(Service):
             await cls.DPG.read_command(client, command)
         async for sender, data in iter:
             # Return the first response from the callback
+            await cls.DPG.unsubscribe(client)
             if data[0] == 1:
                 return data[2:]
             else:
