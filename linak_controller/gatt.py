@@ -78,7 +78,11 @@ class ReferenceInputService(Service):
 
     @classmethod
     def encode_height(cls, height: Union[int, str]) -> bytearray:
-        return bytearray(struct.pack("<H", int(height)))
+        try:
+            return bytearray(struct.pack("<H", int(height)))
+        except struct.error:
+            raise ValueError("Height must be an integer between 0 and 65535")
+
 
 # Reference Output
 
