@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.1.1] Unreleased
+## [1.1.1] - 2023-12-01
 
 ### Changed
 
@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Configurable move command period should allow float [76](https://github.com/rhyst/linak-controller/pull/76) by @tomsb
+- Fixed "ValueError: Characteristic notifications already started" [77](https://github.com/rhyst/linak-controller/issues/77)
 
 ## [1.1.0] - 2023-11-03
 
