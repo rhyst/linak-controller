@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - Unreleased
+
+### Added 
+
+- Added http endpoint in addition to web socket endpoint in server mode
+
 ## [1.1.1] - 2023-12-01
 
 ### Changed

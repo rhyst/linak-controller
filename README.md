@@ -122,7 +122,13 @@ You can also use any of the favourites that are configured on the server:
 linak-controller --forward --move-to stand
 ```
 
-There is also a simpler TCP server mode which allows you to send commands without needing a copy of the script on the client. You can start the tcp server with:
+You can also directly post a JSON object to the server:
+
+```
+curl -X POST http://127.0.0.1:9123 --data '{"command": "move_to", "move_to": 640}'
+```
+
+There is also a simpler TCP server mode which you can with:
 
 ```
 linak-controller --tcp-server
@@ -134,7 +140,7 @@ And then use any tool you like to send commands. For example you could use `nc` 
 echo '{"command": "move_to", "move_to": 640}' | nc -w 1 127.0.0.1 9123
 ```
 
-In this mode the client will not receive any height or speed values.
+If you use the `linak-controller` command to send commands to the server then you will receive live logging back from the server, which you will not receive if you post JSON or use the TCP server.
 
 ## Troubleshooting
 

@@ -131,7 +131,8 @@ async def run_tcp_forwarded_command(client, reader, writer):
 async def run_server(client: BleakClient):
     """Start a server to listen for commands via websocket connection"""
     app = web.Application()
-    app.router.add_get("/", partial(run_forwarded_command, client))
+    app.router.add_post("/", partial(run_forwarded_command, client))
+    app.router.add_get("/ws", partial(run_forwarded_ws_command, client))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, config.server_address, config.server_port)
@@ -143,6 +144,19 @@ async def run_server(client: BleakClient):
 async def run_forwarded_command(client: BleakClient, request):
     """Run commands received by the server"""
     print("Received command")
+
+    forwarded_config = await request.json()
+    for key in forwarded_config:
+        setattr(config, key, forwarded_config[key])
+    await run_command(client)
+    return web.Response(text="OK")
+
+async def run_forwarded_ws_command(client: BleakClient, request):
+    """
+    Run commands received by the server via websocket connection
+    This allows live streaming of the logs back to the client
+    """
+    print("Received ws command")
     ws = web.WebSocketResponse()
 
     def log(message, end="\n"):
@@ -177,7 +191,7 @@ async def forward_command():
     }
     session = aiohttp.ClientSession()
     ws = await session.ws_connect(
-        f"http://{config.server_address}:{config.server_port}"
+        f"http://{config.server_address}:{config.server_port}/ws"
     )
     await ws.send_str(json.dumps(forwarded_config))
     while True:
