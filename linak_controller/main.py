@@ -180,7 +180,7 @@ async def run_forwarded_ws_command(client: BleakClient, request):
 
 async def forward_command():
     """Send commands to a server instance of this script"""
-    allowed_commands = [None, Commands.move_to]
+    allowed_commands = [None, Commands.move_to, Commands.watch]
     if config.command not in allowed_commands:
         print(f"Command must be one of {allowed_commands}")
         return
