@@ -17,7 +17,7 @@ linak-controller = 'linak_controller.main:init'
 idasen-controller = 'linak_controller.main:init'
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.10.1"
+black = ">=23.10.1,<25.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
