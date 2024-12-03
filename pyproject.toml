@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "linak-controller"
-version = "1.2.0-dev"
+version = "1.2.0"
 description = "Command line tool for controlling the Linak standing desks"
 authors = ["Rhys Tyers"]
 license = "MIT"
