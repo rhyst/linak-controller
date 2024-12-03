@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file.
 
 - Added http endpoint in addition to web socket endpoint in server mode
 
+### Changes
+
+- Added support for Python 3.13
+- Update bleak dependency
+
 ## [1.1.1] - 2023-12-01
 
 ### Changed
