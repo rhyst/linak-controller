@@ -112,7 +112,7 @@ class Config:
             help="The address the server should run at",
         )
         parser.add_argument(
-            "--server_port",
+            "--server-port",
             dest="server_port",
             type=int,
             help="The port the server should run on",
