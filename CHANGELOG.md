@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2025-xx-xx
+
+### Breaking
+
+If using the http or tcp server the JSON payload should now be a `command` object and not a `config` object:
+
+```bash
+# HTTP
+curl -X POST http://127.0.0.1:9123 --data '{"key": "move_to", "value": 640}'
+
+# TCP
+echo '{"key": "move_to", "value": 640}' | nc -w 1 127.0.0.1 9123
+```
+
+### Changed
+
+- Refactor global config and command to fix [100](https://github.com/rhyst/linak-controller/issues/100) and [85](https://github.com/rhyst/linak-controller/issues/85)
+
+### Fixed 
+
+- Server port argument [99](https://github.com/rhyst/linak-controller/pull/99) by @gomi-source
+- Allow using FIFO as config file [101](https://github.com/rhyst/linak-controller/pull/101) by @jayrhynas
+
+
 ## [1.2.0] - 2024-12-03
 
 ### Added 

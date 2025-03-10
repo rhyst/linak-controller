@@ -3,8 +3,12 @@ Random helpers and util.
 """
 
 import asyncio
-from .config import config
 
+class Logger:
+    def log(self, message, end="\n"):
+        print(message, end=end)
+
+logger = Logger()
 
 def bytes_to_hex(bytes: bytearray) -> str:
     return bytes.hex(" ")
@@ -37,21 +41,21 @@ def make_iter():
 
 
 class Height:
-    value: int
+    value: int # internal height in 10ths of a mm
+    base_height: int = 0 # height of the desk at the lowest position in mm
 
-    def __init__(self, height: int, convertFromHuman: bool = False):
+    def __init__(self, height: int, base_height: int = 0, convertFromHuman: bool = False):
+        self.base_height = base_height
         if convertFromHuman:
             self.value = self.height_to_internal_height(height)
         else:
-            self.value = height  # Relative height in 10ths of a mm
+            self.value = height
 
-    @classmethod
-    def height_to_internal_height(cls, height: int):
-        return (height - config.base_height) * 10
+    def height_to_internal_height(self, height: int):
+        return (height - self.base_height) * 10
 
-    @classmethod
-    def internal_height_to_height(cls, height: int):
-        return (height / 10) + config.base_height
+    def internal_height_to_height(self, height: int):
+        return (height / 10) + self.base_height
 
     @property
     def human(self) -> int:
@@ -59,7 +63,7 @@ class Height:
 
 
 class Speed:
-    value: int
+    value: int # internal speed in 100ths of a mm/s
 
     def __init__(self, speed: int, convert: bool = False):
         if convert:
@@ -67,12 +71,10 @@ class Speed:
         else:
             self.value = speed  # Speed in 100ths of a mm/s
 
-    @classmethod
-    def speed_to_internal_speed(cls, speed: int):
+    def speed_to_internal_speed(self, speed: int):
         return speed * 100
 
-    @classmethod
-    def internal_speed_to_speed(cls, speed: int):
+    def internal_speed_to_speed(self, speed: int):
         return speed / 100
 
     @property

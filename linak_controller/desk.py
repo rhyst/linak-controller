@@ -12,87 +12,101 @@ from .gatt import (
     ReferenceInputService,
     ReferenceOutputService,
 )
-from .config import config
-from .util import bytes_to_hex, Height, Speed
+from .config import Config
+from .util import logger, bytes_to_hex, Height, Speed
 import struct
 
 
 class Desk:
+    client: BleakClient = None
+    config: Config = None
+    disconnecting = False
+
+    def __init__(self, config: Config, client: BleakClient):
+        self.client = client
+        self.config = config
+
     @classmethod
-    async def initialise(cls, client: BleakClient) -> None:
+    async def initialise(cls, config: Config, client: BleakClient) -> None:
+        desk = cls(config, client)
+
         # Read capabilities
-        capabilities = cls.decode_capabilities(
+        capabilities = desk.decode_capabilities(
             await DPGService.dpg_command(client, DPGService.DPG.CMD_GET_CAPABILITIES)
         )
-        print("Capabilities: {}".format(capabilities))
+        logger.log("Capabilities: {}".format(capabilities))
 
         # Read the user id
         user_id = await DPGService.dpg_command(client, DPGService.DPG.CMD_USER_ID)
-        print("User ID: {}".format(bytes_to_hex(user_id)))
+        logger.log("User ID: {}".format(bytes_to_hex(user_id)))
         if user_id and user_id[0] != 1:
             # For DPG1C it is important that the first byte is set to 1
             # The other bytes do not seem to matter
             user_id[0] = 1
-            print("Setting user ID to {}".format(bytes_to_hex(user_id)))
+            logger.log("Setting user ID to {}".format(bytes_to_hex(user_id)))
             await DPGService.dpg_command(client, DPGService.DPG.CMD_USER_ID, user_id)
 
         # Check if base height should be taken from controller
-        if config.base_height == None:
+        if config["base_height"] == None:
             resp = await DPGService.dpg_command(client, DPGService.DPG.CMD_BASE_OFFSET)
             if resp:
                 base_height = struct.unpack("<H", resp[1:])[0] / 10
-                print("Base height from desk: {:4.0f}mm".format(base_height))
-                config.base_height = base_height
+                desk.config["base_height"] = base_height
+        else:
+            desk.config["base_height"] = config["base_height"]
+        logger.log("Base height:{:4.0f}mm".format(desk.config["base_height"]))
 
-    @classmethod
-    async def wakeup(cls, client: BleakClient) -> None:
+        return desk
+
+    async def wakeup(self) -> None:
         await ControlService.COMMAND.write_command(
-            client, ControlService.COMMAND.CMD_WAKEUP
+            self.client, ControlService.COMMAND.CMD_WAKEUP
         )
 
-    @classmethod
-    async def move_to(cls, client: BleakClient, target: Height) -> None:
-        initial_height, speed = await ReferenceOutputService.get_height_speed(client)
+    async def move_to(self, target: Height) -> None:
+        initial_height, speed = await ReferenceOutputService.get_height_speed(self.client)
+        initial_height.base_height = self.config["base_height"]
         if initial_height.value == target.value:
             return
 
-        await cls.wakeup(client)
-        await cls.stop(client)
+        await self.wakeup()
+        await self.stop()
 
         data = ReferenceInputService.encode_height(target.value)
 
         while True:
-            await ReferenceInputService.ONE.write(client, data)
-            await asyncio.sleep(config.move_command_period)
-            height, speed = await ReferenceOutputService.get_height_speed(client)
+            await ReferenceInputService.ONE.write(self.client, data)
+            await asyncio.sleep(self.config["move_command_period"])
+            height, speed = await ReferenceOutputService.get_height_speed(self.client)
+            height.base_height = self.config["base_height"]
             if speed.value == 0:
                 break
-            config.log(
-                "Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(height.human, speed.human)
+            logger.log(
+                "Height:{:4.0f}mm Speed: {:2.0f}mm/s".format(height.human, speed.human)
             )
 
-    @classmethod
-    async def get_height_speed(cls, client: BleakClient) -> Tuple[Height, Speed]:
-        return await ReferenceOutputService.get_height_speed(client)
+    async def get_height_speed(self) -> Tuple[Height, Speed]:
+        height, speed = await ReferenceOutputService.get_height_speed(self.client)
+        height.base_height = self.config["base_height"]
+        return height, speed
 
-    @classmethod
-    async def watch_height_speed(cls, client: BleakClient) -> None:
+    async def watch_height_speed(self) -> None:
         """Listen for height changes"""
 
         def callback(sender, data):
             height, speed = ReferenceOutputService.decode_height_speed(data)
-            config.log(
-                "Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(height.human, speed.human)
+            height.base_height = self.config["base_height"]
+            logger.log(
+                "Height:{:4.0f}mm Speed: {:2.0f}mm/s".format(height.human, speed.human)
             )
 
-        await ReferenceOutputService.ONE.subscribe(client, callback)
+        await ReferenceOutputService.ONE.subscribe(self.client, callback)
         await asyncio.Future()
 
-    @classmethod
-    async def stop(cls, client: BleakClient) -> None:
+    async def stop(self) -> None:
         try:
             await ControlService.COMMAND.write_command(
-                client, ControlService.COMMAND.CMD_STOP
+                self.client, ControlService.COMMAND.CMD_STOP
             )
         except BleakDBusError as e:
             # Harmless exception that happens on Raspberry Pis
@@ -100,7 +114,7 @@ class Desk:
             pass
 
     @classmethod
-    def decode_capabilities(cls, caps: bytearray) -> dict:
+    def decode_capabilities(self, caps: bytearray) -> dict:
         if len(caps) < 2:
             return {}
         capByte = caps[0]

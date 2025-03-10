@@ -125,7 +125,7 @@ linak-controller --forward --move-to stand
 You can also directly post a JSON object to the server:
 
 ```
-curl -X POST http://127.0.0.1:9123 --data '{"command": "move_to", "move_to": 640}'
+curl -X POST http://127.0.0.1:9123 --data '{"key": "move_to", "value": 640}'
 ```
 
 There is also a simpler TCP server mode which you can with:
@@ -137,7 +137,7 @@ linak-controller --tcp-server
 And then use any tool you like to send commands. For example you could use `nc` on linux:
 
 ```
-echo '{"command": "move_to", "move_to": 640}' | nc -w 1 127.0.0.1 9123
+echo '{"key": "move_to", "value": 640}' | nc -w 1 127.0.0.1 9123
 ```
 
 If you use the `linak-controller` command to send commands to the server then you will receive live logging back from the server, which you will not receive if you post JSON or use the TCP server.
