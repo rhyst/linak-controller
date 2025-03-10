@@ -174,7 +174,7 @@ class Config:
         # Overwrite config from config.yaml
         config_file = {}
         config_file_path = os.path.join(args["config"])
-        if config_file_path and os.path.isfile(config_file_path):
+        if config_file_path and os.path.exists(config_file_path) and not os.path.isdir(config_file_path):
             with open(config_file_path, "r") as stream:
                 try:
                     config_file = yaml.safe_load(stream)
