@@ -6,10 +6,10 @@ authors = ["Rhys Tyers"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.14"
+python = ">=3.9"
 aiohttp = "^3.8.4"
 appdirs = "^1.4.4"
-bleak = "^0.22.3"
+bleak = "^1.1.1"
 PyYAML = "^6.0"
 
 [tool.poetry.scripts]
