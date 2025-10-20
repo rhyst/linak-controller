@@ -26,19 +26,17 @@ class Commands(str, Enum):
     tcp_server = "tcp_server"
 
 
-Config = TypedDict(
-    "Config",
-    mac_address=Optional[str],
-    base_height=Optional[int],
-    adapter_name=str,
-    scan_timeout=int,
-    connection_timeout=int,
-    server_address=str,
-    server_port=int,
-    favourites=dict,
-    forward=bool,
-    move_command_period=float,
-)
+class Config(TypedDict):
+    mac_address: Optional[str]
+    base_height: Optional[int]
+    adapter_name: str
+    scan_timeout: int
+    connection_timeout: int
+    server_address: str
+    server_port: int
+    favourites: dict
+    forward: bool
+    move_command_period: float
 
 default_config = Config(
     {
@@ -55,11 +53,9 @@ default_config = Config(
     }
 )
 
-Command = TypedDict(
-    "Command",
-    key=Optional[Commands],
-    value=Optional[str],
-)
+class Command(TypedDict):
+    key: Optional[Commands]
+    value: Optional[str]
 
 
 def get_config() -> tuple[Config, Command]:
