@@ -1,5 +1,5 @@
 *
-!poetry.lock
+!uv.lock
 !pyproject.toml
 !recipes/docker/docker_entrypoint.sh
 !linak_controller/

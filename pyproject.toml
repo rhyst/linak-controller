@@ -1,24 +1,24 @@
-[tool.poetry]
+[project]
 name = "linak-controller"
-version = "1.3.0-dev"
+version = "1.3.0"
 description = "Command line tool for controlling the Linak standing desks"
-authors = ["Rhys Tyers"]
+authors = [{ name = "Rhys Tyers" }]
+requires-python = ">=3.9"
 license = "MIT"
+dependencies = [
+    "aiohttp>=3.8.4,<4",
+    "appdirs>=1.4.4,<2",
+    "bleak>=1.1.1,<2",
+    "PyYAML~=6.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.9"
-aiohttp = "^3.8.4"
-appdirs = "^1.4.4"
-bleak = "^1.1.1"
-PyYAML = "^6.0"
+[project.scripts]
+linak-controller = "linak_controller.main:init"
+idasen-controller = "linak_controller.main:init"
 
-[tool.poetry.scripts]
-linak-controller = 'linak_controller.main:init'
-idasen-controller = 'linak_controller.main:init'
-
-[tool.poetry.group.dev.dependencies]
-black = "^23.10.1"
+[dependency-groups]
+dev = ["black>=23.10.1,<24"]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

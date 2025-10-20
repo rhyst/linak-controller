@@ -176,22 +176,17 @@ There is a page with a few examples of different ways to use the script: [RECIPE
 
 ## Development
 
-Install the dependencies with poetry:
+First install `uv`. Then you can run the script with:
 
 ```
-poetry install
-```
-
-Then you can run the script with:
-
-```
-poetry run python -m linak_controller.main <command>
+uv run -m linak_controller.main <command>
 ```
 
 You can also install the project in editable/development mode with:
 
 ```
-pip install -e .
+uv sync
+uv pip install -e .
 ```
 
 To build the project for publishing run:

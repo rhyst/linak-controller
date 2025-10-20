@@ -1,6 +1,5 @@
 # Do `sudo killall -9 bluetoothd` on your host before starting.
 
-version: '3'
 services:
   linakcontroller:
     build:
