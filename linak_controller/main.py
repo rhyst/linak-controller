@@ -88,7 +88,7 @@ async def run_command(desk: Desk, command: Command):
         # Move to custom height
         if command["value"] in desk.config["favourites"]:
             target = Height(
-                desk.config["favourites"].get(command["value"]), desk.base_height, True
+                desk.config["favourites"].get(command["value"]), desk.config["base_height"], True
             )
             logger.log(
                 f"""Moving to favourite height: {command["value"]} ({target.human} mm)"""
