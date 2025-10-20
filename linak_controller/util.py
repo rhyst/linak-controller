@@ -52,10 +52,10 @@ class Height:
             self.value = height
 
     def height_to_internal_height(self, height: int):
-        return (height - self.base_height) * 10
+        return int((height - self.base_height) * 10)
 
     def internal_height_to_height(self, height: int):
-        return (height / 10) + self.base_height
+        return round((height / 10) + self.base_height)
 
     @property
     def human(self) -> int:

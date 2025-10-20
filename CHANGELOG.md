@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2025-10-20
+
+### Fixed
+
+- Fix underflow and overflow heights throwing errors
+
 ## [1.3.1] - 2025-10-20
 
 ### Fixed

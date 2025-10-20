@@ -101,6 +101,20 @@ async def run_command(desk: Desk, command: Command):
                 f"""Not a valid height or favourite position: {command["value"]}"""
             )
             return
+
+        # Validate target height is not below base height or above maximum
+        if target.value < 0:
+            logger.log(
+                f"""Cannot move to {target.human:.0f}mm - it's below the base height of {desk.config["base_height"]}mm"""
+            )
+            return
+        if target.value > 65535:
+            max_height = desk.config["base_height"] + (65535 / 10)
+            logger.log(
+                f"""Cannot move to {target.human:.0f}mm - it's above the maximum height of {max_height:.0f}mm"""
+            )
+            return
+
         if target.value == initial_height.value:
             logger.log(f"Nothing to do - already at specified height")
             return
