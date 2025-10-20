@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.3.0] - 2025-xx-xx
+## [1.3.1] - 2025-10-20
+
+### Fixed
+
+- Logging issues when used in server mode
+
+## [1.3.0] - 2025-10-20
 
 ### Breaking
 

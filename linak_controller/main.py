@@ -165,9 +165,21 @@ async def run_forwarded_ws_command(desk: Desk, request):
     logger.log("Received ws command")
     ws = web.WebSocketResponse()
 
+    # Save reference to original log function before reassigning
+    original_log = logger.log
+
+    async def safe_send(message):
+        """Send message to websocket, catching any connection errors"""
+        try:
+            if not ws.closed:
+                await ws.send_str(str(message))
+        except Exception:
+            # Silently ignore errors when sending to closed websocket
+            pass
+
     def log(message, end="\n"):
-        logger.log(message, end=end)
-        asyncio.create_task(ws.send_str(str(message)))
+        original_log(message, end=end)
+        asyncio.create_task(safe_send(message))
 
     logger.log = log
 
