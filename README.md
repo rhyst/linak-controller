@@ -68,6 +68,7 @@ The script accepts a number of commands:
 | Command                      | Description                                                                                       |
 | ---------------------------- | ------------------------------------------------------------------------------------------------- |
 |                              | Running without any command will print the current desk height                                    |
+| `--status`                   | Read the current desk status and exit                                                            |
 | `--watch`                    | Watch desk and print changes to height (and speed)                                                |
 | `--move-to <value>`          | Move the desk to a certain height (mm) above the floor                                            |
 | `--scan`                     | List available bluetooth devices (using the configured `adapter_name`)                            |

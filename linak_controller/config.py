@@ -19,6 +19,7 @@ class CommandAction(argparse.Action):
 
 
 class Commands(str, Enum):
+    status = "status"
     watch = "watch"
     move_to = "move_to"
     scan_adapter = "scan_adapter"
@@ -147,6 +148,13 @@ def get_config() -> tuple[Config, Command]:
     # Command to run
 
     cmd = parser.add_mutually_exclusive_group()
+    cmd.add_argument(
+        "--status",
+        dest="command",
+        action="store_const",
+        const=Commands.status,
+        help="Read the current desk status and exit",
+    )
     cmd.add_argument(
         "--watch",
         dest="command",

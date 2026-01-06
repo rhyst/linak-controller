@@ -79,11 +79,14 @@ async def run_command(desk: Desk, command: Command):
     initial_height, _ = await desk.get_height_speed()
     logger.log("Height: {:4.0f}mm".format(initial_height.human))
     target = None
-    
+
     if command["key"] == Commands.watch:
         # Print changes to height data
         logger.log("Watching for changes to desk height and speed")
         await desk.watch_height_speed()
+    elif command["key"] == Commands.status:
+        # Just return as height has already been printed
+        return
     elif command["key"] == Commands.move_to:
         # Move to custom height
         if command["value"] in desk.config["favourites"]:
@@ -210,7 +213,7 @@ async def run_forwarded_ws_command(desk: Desk, request):
 
 async def forward_command(config: Config, command: Command):
     """Send commands to a server instance of this script"""
-    allowed_commands = [None, Commands.move_to]
+    allowed_commands = [None, Commands.move_to, Commands.status]
     if command["key"] not in allowed_commands:
         logger.log(f"Command must be one of {allowed_commands}")
         return
