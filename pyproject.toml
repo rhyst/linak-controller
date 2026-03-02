@@ -24,7 +24,7 @@ linak-controller = "linak_controller.main:init"
 idasen-controller = "linak_controller.main:init"
 
 [dependency-groups]
-dev = ["black>=23.10.1,<24"]
+dev = ["black>=23.10.1,<25"]
 
 [tool.uv.workspace]
 members = []
