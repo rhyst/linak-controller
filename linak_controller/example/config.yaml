@@ -4,6 +4,7 @@ connection_timeout: 10
 adapter_name: hci0
 server_address: "127.0.0.1"
 server_port: 9123
+watch: true
 favourites:
   sit: 683
   stand: 1040

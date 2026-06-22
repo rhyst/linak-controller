@@ -37,6 +37,7 @@ class Config(TypedDict):
     favourites: dict
     forward: bool
     move_command_period: float
+    watch: bool
 
 default_config = Config(
     {
@@ -50,6 +51,7 @@ default_config = Config(
         "favourites": {},
         "forward": False,
         "move_command_period": 0.4,
+        "watch": False,
     }
 )
 

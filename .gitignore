@@ -1,8 +1,10 @@
 reference/com.linak.deskcontrol/
 venv/
 .vscode
+.idea
 desk.pickle
 __pycache__/
 *.egg-info
 dist/
 build/
+.DS_Store

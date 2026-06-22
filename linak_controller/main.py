@@ -8,7 +8,7 @@ from bleak import BleakClient, BleakError, BleakScanner
 import json
 from functools import partial
 from .config import get_config, Config, Command, Commands
-from .util import Height, logger
+from .util import Height, Speed, logger
 from .desk import Desk
 
 
@@ -23,16 +23,25 @@ async def scan(config: Config):
         logger.log(device)
     return devices
 
+
 desk_for_disconnect = None
+
 
 def disconnect_callback(client: BleakClient, _=None):
     global desk_for_disconnect
     if not desk_for_disconnect.disconnecting:
         logger.log("Lost connection with {}".format(client.address))
-        asyncio.create_task(connect(desk_for_disconnect.config, desk_for_disconnect))
+        was_watching = desk_for_disconnect.mark_disconnected()
+        asyncio.create_task(
+            connect(
+                desk_for_disconnect.config,
+                desk_for_disconnect,
+                resume_watching=was_watching,
+            )
+        )
 
 
-async def connect(config: Config, desk=None, attempt=0):
+async def connect(config: Config, desk=None, attempt=0, resume_watching=False):
     """Attempt to connect to the desk"""
     try:
         logger.log("Connecting\r", end="")
@@ -50,6 +59,8 @@ async def connect(config: Config, desk=None, attempt=0):
         else:
             await desk.client.connect(timeout=config["connection_timeout"])
             logger.log("Reconnected: {}".format(config["mac_address"]))
+            if resume_watching:
+                await desk.start_watching()
         return desk
     except BleakError as e:
         logger.log("Connecting failed")
@@ -152,9 +163,21 @@ async def run_tcp_forwarded_command(desk: Desk, reader, writer):
 
 async def run_http_server(desk: Desk):
     """Start a server to listen for commands via websocket connection"""
+    if desk.config["watch"]:
+        def log_event(height: Height, speed: Speed) -> None:
+            logger.log(
+                "Height:{:4.0f}mm Speed: {:2.0f}mm/s".format(
+                    height.human, speed.human
+                )
+            )
+        desk.subscribe(log_event)
+        await desk.start_watching()
+        logger.log("Watching desk for height/speed events")
+
     app = web.Application()
     app.router.add_post("/", partial(run_forwarded_http_command, desk))
     app.router.add_get("/ws", partial(run_forwarded_ws_command, desk))
+    app.router.add_get("/events", partial(run_event_stream, desk))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, desk.config["server_address"], desk.config["server_port"])
@@ -205,6 +228,36 @@ async def run_forwarded_ws_command(desk: Desk, request):
         break
     await asyncio.sleep(1)  # Allows final messages to send on web socket
     await ws.close()
+    return ws
+
+
+async def run_event_stream(desk: Desk, request):
+    """Stream desk height/speed events to a connected client over a websocket."""
+    logger.log("Event stream client connected")
+    ws = web.WebSocketResponse()
+    await ws.prepare(request)
+
+    async def send_event(height: Height, speed: Speed):
+        if ws.closed:
+            return
+        try:
+            await ws.send_json({"height": height.human, "speed": speed.human})
+        except Exception:
+            pass # Connection dropped mid-send; cleanup runs in the finally below.
+
+    desk.subscribe(send_event)
+
+    if desk.latest_height is not None and desk.latest_speed is not None:
+        await send_event(desk.latest_height, desk.latest_speed)
+
+    try:
+        # Hold the connection open. The async iterator exits when the client disconnects
+        async for _ in ws:
+            pass
+    finally:
+        desk.unsubscribe(send_event)
+        logger.log("Event stream client disconnected")
+
     return ws
 
 
