@@ -450,6 +450,7 @@ dependencies = [
     { name = "aiohttp" },
     { name = "appdirs" },
     { name = "bleak" },
+    { name = "dbus-fast", marker = "sys_platform == 'linux'" },
     { name = "pyyaml" },
 ]
 
@@ -463,6 +464,7 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.14.3,<4" },
     { name = "appdirs", specifier = ">=1.4.4,<2" },
     { name = "bleak", specifier = ">=3.0.2,<4" },
+    { name = "dbus-fast", marker = "sys_platform == 'linux'", specifier = ">=2.44.5,<3" },
     { name = "pyyaml", specifier = ">=6.0.3,<7" },
 ]
 

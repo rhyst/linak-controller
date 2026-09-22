@@ -10,6 +10,7 @@ dependencies = [
     "aiohttp>=3.14.3,<4",
     "appdirs>=1.4.4,<2",
     "bleak>=3.0.2,<4",
+    "dbus-fast>=2.44.5,<3; sys_platform == 'linux'",
     "PyYAML>=6.0.3,<7",
 ]
 

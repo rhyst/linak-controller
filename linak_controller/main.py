@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 import os
+import sys
 import traceback
 import asyncio
 import aiohttp
 from aiohttp import web
 from bleak import BleakClient, BleakError, BleakScanner
+from bleak.backends.device import BLEDevice
+from bleak.exc import BleakDeviceNotFoundError
 import json
+from typing import Optional
 from functools import partial
 from .config import get_config, Config, Command, Commands
 from .util import Height, logger
@@ -15,8 +19,8 @@ from .desk import Desk
 async def scan(config: Config):
     """Scan for a bluetooth device with the configured address and return it or return all devices if no address specified"""
     logger.log("Scanning\r", end="")
-    devices = await BleakScanner().discover(
-        device=config["adapter_name"], timeout=config["scan_timeout"]
+    devices = await BleakScanner.discover(
+        timeout=config["scan_timeout"], bluez={"adapter": config["adapter_name"]}
     )
     logger.log("Found {} devices using {}".format(len(devices), config["adapter_name"]))
     for device in devices:
@@ -34,23 +38,64 @@ def disconnect_callback(client: BleakClient, _=None):
         asyncio.create_task(connect(desk_for_disconnect.config, desk_for_disconnect))
 
 
+def make_client(config: Config, address=None) -> BleakClient:
+    return BleakClient(
+        address or config["mac_address"],
+        disconnected_callback=disconnect_callback,
+        timeout=config["connection_timeout"],
+        bluez={"adapter": config["adapter_name"]},
+    )
+
+
+async def connected_device(config: Config) -> Optional[BLEDevice]:
+    """Find the desk among the devices BlueZ already holds a connection to"""
+    from dbus_fast import BusType, unpack_variants
+    from dbus_fast.aio import MessageBus
+
+    bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
+    try:
+        introspection = await bus.introspect("org.bluez", "/")
+        proxy = bus.get_proxy_object("org.bluez", "/", introspection)
+        manager = proxy.get_interface("org.freedesktop.DBus.ObjectManager")
+        objects = await manager.call_get_managed_objects()
+    finally:
+        bus.disconnect()
+
+    prefix = "/org/bluez/{}/".format(config["adapter_name"])
+    for path, interfaces in objects.items():
+        if not path.startswith(prefix) or "org.bluez.Device1" not in interfaces:
+            continue
+        props = unpack_variants(interfaces["org.bluez.Device1"])
+        if props["Address"].upper() == config["mac_address"] and props["Connected"]:
+            return BLEDevice(
+                props["Address"], props.get("Alias"), {"path": path, "props": props}
+            )
+    return None
+
+
 async def connect(config: Config, desk=None, attempt=0):
     """Attempt to connect to the desk"""
     try:
         logger.log("Connecting\r", end="")
         if not desk:
-            client = BleakClient(
-                config["mac_address"],
-                device=config["adapter_name"],
-                disconnected_callback=disconnect_callback,
-            )
-            await client.connect(timeout=config["connection_timeout"])
+            client = make_client(config)
+            try:
+                await client.connect()
+            except BleakDeviceNotFoundError:
+                # https://github.com/hbldh/bleak/pull/1979
+                device = (
+                    await connected_device(config) if sys.platform == "linux" else None
+                )
+                if not device:
+                    raise
+                client = make_client(config, device)
+                await client.connect()
             logger.log("Connected: {}".format(config["mac_address"]))
             desk = await Desk.initialise(config, client)
             global desk_for_disconnect
             desk_for_disconnect = desk
         else:
-            await desk.client.connect(timeout=config["connection_timeout"])
+            await desk.client.connect()
             logger.log("Reconnected: {}".format(config["mac_address"]))
         return desk
     except BleakError as e:
