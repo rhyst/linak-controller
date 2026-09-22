@@ -11,7 +11,7 @@ Note: This script may not work with all Linak desks - see below for comaptible m
 ### Prerequisites
 
 - Windows / Linux / Mac
-- The device should have Python 3
+- The device should have Python 3.10 or later
 - The desk should be paired to the device.
 
 ### Working Desks
@@ -141,6 +141,8 @@ And then use any tool you like to send commands. For example you could use `nc` 
 ```
 echo '{"key": "move_to", "value": 640}' | nc -w 1 127.0.0.1 9123
 ```
+
+Commands should be newline terminated.
 
 If you use the `linak-controller` command to send commands to the server then you will receive live logging back from the server, which you will not receive if you post JSON or use the TCP server.
 

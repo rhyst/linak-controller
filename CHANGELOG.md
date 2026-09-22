@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-09-22
+
+### Breaking
+
+- Minimum python version is now 3.10.
+
+### Added
+
+- Optional timestamps in logs via `log_timestamps` and `log_timestamp_format` [111](https://github.com/rhyst/linak-controller/pull/111) by @victor-hucklenbroich
+
+### Changed
+
+- Updated dependencies, notably bleak 3
+
+### Fixed
+
+- Connecting to a desk that the system is already connected to
+- TCP server hanging until the client disconnected [96](https://github.com/rhyst/linak-controller/issues/96)
+- Invalid JSON sent to the TCP server raising instead of being logged
+- Losing the connection before it was established raising
+- Noisy D-Bus error on disconnect
+- Desks reporting a fractional base height being unable to move to their lowest positions [75](https://github.com/rhyst/linak-controller/issues/75)
+
 ## [1.3.2] - 2025-10-20
 
 ### Fixed
