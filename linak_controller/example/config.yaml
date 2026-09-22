@@ -4,6 +4,8 @@ connection_timeout: 10
 adapter_name: hci0
 server_address: "127.0.0.1"
 server_port: 9123
+log_timestamps: false
+log_timestamp_format: "%Y-%m-%d %H:%M:%S"
 favourites:
   sit: 683
   stand: 1040

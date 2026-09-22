@@ -6,11 +6,14 @@ import asyncio
 from datetime import datetime
 
 
-
 class Logger:
+    timestamps = False
+    timestamp_format = "%Y-%m-%d %H:%M:%S"
+
     def log(self, message, end="\n"):
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"{timestamp} {message}", end=end)
+        if self.timestamps:
+            message = f"{datetime.now().strftime(self.timestamp_format)} {message}"
+        print(message, end=end)
 
 
 logger = Logger()

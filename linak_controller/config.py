@@ -37,6 +37,8 @@ class Config(TypedDict):
     favourites: dict
     forward: bool
     move_command_period: float
+    log_timestamps: bool
+    log_timestamp_format: str
 
 
 default_config = Config(
@@ -51,6 +53,8 @@ default_config = Config(
         "favourites": {},
         "forward": False,
         "move_command_period": 0.4,
+        "log_timestamps": False,
+        "log_timestamp_format": "%Y-%m-%d %H:%M:%S",
     }
 )
 
@@ -137,6 +141,19 @@ def get_config() -> tuple[Config, Command]:
         dest="server_port",
         type=int,
         help="The port the server should run on",
+    )
+    parser.add_argument(
+        "--log-timestamps",
+        dest="log_timestamps",
+        action="store_true",
+        default=None,
+        help="Prefix log lines with a timestamp",
+    )
+    parser.add_argument(
+        "--log-timestamp-format",
+        dest="log_timestamp_format",
+        type=str,
+        help="The strftime format for log timestamps",
     )
     parser.add_argument(
         "--config",

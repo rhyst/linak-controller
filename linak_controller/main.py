@@ -293,6 +293,8 @@ async def main():
     desk = None
     try:
         config, command = get_config()
+        logger.timestamps = config["log_timestamps"]
+        logger.timestamp_format = config["log_timestamp_format"]
         # Forward and scan don't require a connection so run them and exit
         if config["forward"]:
             await forward_command(config, command)

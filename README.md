@@ -52,6 +52,8 @@ Config options:
 | `server_address`      | The address the server should run at (if running server).                                             | `127.0.0.1`                 |
 | `server_port`         | The port the server should run on (if running server).                                                | `9123`                      |
 | `favourites`          | Favourite heights object where the key is the name and the value is the height                        | `{ sit: 683, stand: 1040 }` |
+| `log_timestamps`      | Prefix log lines with a timestamp                                                                     | `false`                     |
+| `log_timestamp_format`| The [strftime](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes) format for log timestamps | `%Y-%m-%d %H:%M:%S` |
 
 All of these options (except `favourites`) can be set on the command line, just replace any `_` with `-` e.g. `mac_address` becomes `--mac-address`.
 
