@@ -207,6 +207,7 @@ Other useful projects that make use of this one:
 
 - [Home Assistant Integration](https://github.com/j5lien/esphome-idasen-desk-controller) by @j5lien
 - [GNOME Extension](https://extensions.gnome.org/extension/8841/linakidasen-desk-controller) by @p-gentili
+- [macOS Menu Bar App](https://github.com/victor-hucklenbroich/desk-controller) by @victor-hucklenbroich
 
 ## Attribution
 
