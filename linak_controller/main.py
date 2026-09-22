@@ -198,8 +198,12 @@ async def run_tcp_forwarded_command(desk: Desk, reader, writer):
     """Run commands received by the tcp server"""
     logger.log("Received command")
     request = (await reader.readline()).decode("utf8")
-    command = json.loads(request)
-    await run_command(desk, command)
+    try:
+        command = json.loads(request)
+    except json.JSONDecodeError:
+        logger.log("Invalid command: {}".format(request.strip()))
+    else:
+        await run_command(desk, command)
     writer.close()
 
 
