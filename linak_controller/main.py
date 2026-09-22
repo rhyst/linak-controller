@@ -197,8 +197,8 @@ async def run_tcp_server(desk: Desk):
 async def run_tcp_forwarded_command(desk: Desk, reader, writer):
     """Run commands received by the tcp server"""
     logger.log("Received command")
-    request = (await reader.read()).decode("utf8")
-    command = json.loads(str(request))
+    request = (await reader.readline()).decode("utf8")
+    command = json.loads(request)
     await run_command(desk, command)
     writer.close()
 
