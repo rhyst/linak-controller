@@ -50,7 +50,7 @@ class Desk:
         if config["base_height"] == None:
             resp = await DPGService.dpg_command(client, DPGService.DPG.CMD_BASE_OFFSET)
             if resp:
-                base_height = struct.unpack("<H", resp[1:])[0] / 10
+                base_height = round(struct.unpack("<H", resp[1:])[0] / 10)
                 desk.config["base_height"] = base_height
         else:
             desk.config["base_height"] = config["base_height"]
