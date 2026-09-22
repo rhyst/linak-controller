@@ -33,7 +33,7 @@ desk_for_disconnect = None
 
 def disconnect_callback(client: BleakClient, _=None):
     global desk_for_disconnect
-    if not desk_for_disconnect.disconnecting:
+    if desk_for_disconnect and not desk_for_disconnect.disconnecting:
         logger.log("Lost connection with {}".format(client.address))
         asyncio.create_task(connect(desk_for_disconnect.config, desk_for_disconnect))
 
