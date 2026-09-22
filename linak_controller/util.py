@@ -4,11 +4,14 @@ Random helpers and util.
 
 import asyncio
 
+
 class Logger:
     def log(self, message, end="\n"):
         print(message, end=end)
 
+
 logger = Logger()
+
 
 def bytes_to_hex(bytes: bytearray) -> str:
     return bytes.hex(" ")
@@ -41,10 +44,12 @@ def make_iter():
 
 
 class Height:
-    value: int # internal height in 10ths of a mm
-    base_height: int = 0 # height of the desk at the lowest position in mm
+    value: int  # internal height in 10ths of a mm
+    base_height: int = 0  # height of the desk at the lowest position in mm
 
-    def __init__(self, height: int, base_height: int = 0, convertFromHuman: bool = False):
+    def __init__(
+        self, height: int, base_height: int = 0, convertFromHuman: bool = False
+    ):
         self.base_height = base_height
         if convertFromHuman:
             self.value = self.height_to_internal_height(height)
@@ -63,7 +68,7 @@ class Height:
 
 
 class Speed:
-    value: int # internal speed in 100ths of a mm/s
+    value: int  # internal speed in 100ths of a mm/s
 
     def __init__(self, speed: int, convert: bool = False):
         if convert:

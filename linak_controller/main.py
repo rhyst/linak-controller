@@ -23,7 +23,9 @@ async def scan(config: Config):
         logger.log(device)
     return devices
 
+
 desk_for_disconnect = None
+
 
 def disconnect_callback(client: BleakClient, _=None):
     global desk_for_disconnect
@@ -83,7 +85,7 @@ async def run_command(desk: Desk, command: Command):
     initial_height, _ = await desk.get_height_speed()
     logger.log("Height: {:4.0f}mm".format(initial_height.human))
     target = None
-    
+
     if command["key"] == Commands.watch:
         # Print changes to height data
         logger.log("Watching for changes to desk height and speed")
@@ -92,7 +94,9 @@ async def run_command(desk: Desk, command: Command):
         # Move to custom height
         if command["value"] in desk.config["favourites"]:
             target = Height(
-                desk.config["favourites"].get(command["value"]), desk.config["base_height"], True
+                desk.config["favourites"].get(command["value"]),
+                desk.config["base_height"],
+                True,
             )
             logger.log(
                 f"""Moving to favourite height: {command["value"]} ({target.human} mm)"""
@@ -161,7 +165,9 @@ async def run_http_server(desk: Desk):
     app.router.add_get("/ws", partial(run_forwarded_ws_command, desk))
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, desk.config["server_address"], desk.config["server_port"])
+    site = web.TCPSite(
+        runner, desk.config["server_address"], desk.config["server_port"]
+    )
     await site.start()
     logger.log("Server listening")
     await asyncio.Future()

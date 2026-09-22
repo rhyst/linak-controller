@@ -38,6 +38,7 @@ class Config(TypedDict):
     forward: bool
     move_command_period: float
 
+
 default_config = Config(
     {
         "mac_address": None,
@@ -52,6 +53,7 @@ default_config = Config(
         "move_command_period": 0.4,
     }
 )
+
 
 class Command(TypedDict):
     key: Optional[Commands]

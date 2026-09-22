@@ -64,7 +64,9 @@ class Desk:
         )
 
     async def move_to(self, target: Height) -> None:
-        initial_height, speed = await ReferenceOutputService.get_height_speed(self.client)
+        initial_height, speed = await ReferenceOutputService.get_height_speed(
+            self.client
+        )
         initial_height.base_height = self.config["base_height"]
         if initial_height.value == target.value:
             return
