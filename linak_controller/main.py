@@ -70,7 +70,11 @@ async def disconnect(desk: Desk):
     """Attempt to disconnect cleanly"""
     if desk.client.is_connected:
         desk.disconnecting = True
-        await desk.client.disconnect()
+        try:
+            await desk.client.disconnect()
+        except (EOFError, OSError):
+            # https://github.com/hbldh/bleak/pull/2012
+            pass
 
 
 async def run_command(desk: Desk, command: Command):
